@@ -1,3 +1,9 @@
+**WORKFLOW**
+
+1.Check https://en.wikipedia.org/wiki/List_of_S%26P_500_companies for any SP500 changes. If there are, maintain in C:\Users\kleme\OneDrive\HF_Trading\RoboTrader\backup\sp500_changes.xls
+
+
+
 **DEMO:**
 In demo mode only data to the SP500 sector 'Telecommunications Services' will be loaded and processed. Demo flag is being set in commons.py - see variable _demo_scenario_. Otherwise all stock symbols will be processed (500 stocks!), and it will take a long time...
 

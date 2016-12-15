@@ -1,6 +1,6 @@
 **WORKFLOW**
 
-1.Check https://en.wikipedia.org/wiki/List_of_S%26P_500_companies for any SP500 changes. If there are, maintain in C:\Users\kleme\OneDrive\HF_Trading\RoboTrader\backup\sp500_changes.xls
+1.Check https://en.wikipedia.org/wiki/List_of_S%26P_500_companies and https://us.spindices.com/search/?ContentType=Announcement for any SP500 changes. If there are, maintain in C:\Users\kleme\OneDrive\HF_Trading\RoboTrader\backup\sp500_changes.xls
 
 
 

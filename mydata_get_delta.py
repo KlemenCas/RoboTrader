@@ -2,7 +2,7 @@
 from mydata import mydata
 import ttk as tt
 import Tkinter as tk
-import time as tm
+import time
 
 class cl_get_delta(object):
 
@@ -32,84 +32,128 @@ class cl_get_delta(object):
             self.mGui.title('Progress')
             mpb = tt.Progressbar(self.mGui,orient ="horizontal",length = 700, mode ="determinate",variable='i')
             mpb.pack()
-            mpb["maximum"] = 14
+            mpb["maximum"] = 12
             mpb.update()
-            tm.sleep(5)
+            time.sleep(5)
             
+            start=time.time()
             mlb["text"]='Reading Marketcap (all S&P500 tickers).'
             mlb.update()
             mpb["value"]=1
             mpb.update()
             dba=mydata(True,False,True,self.QuandlKey)
-#            dba.getMarketcap()
-
+            dba.getMarketcap()
+            end=time.time()
+            print 'Runtime:',end-start
+            
+            start=time.time()
             mlb["text"]='Refreshing index composition.'    
             mlb.update()
             mpb["value"]=2
             mpb.update()        
-#            dba.get_index_composition()
+            dba.getIndexComposition()
+            end=time.time()
+            print 'Runtime:',end-start
             
+            start=time.time()
             mlb["text"]='Reading SP500 index prices.'    
             mlb.update()
-            mpb["value"]=2
+            mpb["value"]=3
             mpb.update()
-#            dba.getIndexData()
-        
+            dba.getIndexData()
+            end=time.time()
+            print 'Runtime:',end-start
+            
+            start=time.time()
             mlb["text"]='Reading fundamentals.'    
             mlb.update()
             mpb["value"]=4
             mpb.update()    
-#            dba.get_fundamentals()
+            dba.getFundamentals()
+            end=time.time()
+            print 'Runtime:',end-start
             
+            start=time.time()
             mlb["text"]='Reading short sell data.'   
             mlb.update()
             mpb["value"]=5
             mpb.update()    
-#            dba.get_short_sell()
+            dba.getShortSell()
+            end=time.time()
+            print 'Runtime:',end-start
             
+            start=time.time()
             mlb["text"]='Reading sentiment.'    
             mlb.update()
             mpb["value"]=6
             mpb.update()    
-#            dba.get_sentiment()
-        
+            dba.getSentiment()
+            end=time.time()
+            print 'Runtime:',end-start
+            
+            start=time.time()
             mlb["text"]='Calculating dates.'    
             mlb.update()
             mpb["value"]=7
             mpb.update()    
-            dba.calc_sp500_1st_date()
-        
+            dba.calcSp5001stDate()
+            end=time.time()
+            print 'Runtime:',end-start
+            
+            start=time.time()
             mlb["text"]='Updating Alpha and Beta.'    
             mlb.update()
             mpb["value"]=8
             mpb.update()    
             dba.calcSectorBetas()
-        
+            end=time.time()
+            print 'Runtime:',end-start
+            
+            start=time.time()
+            mlb["text"]='Slicing Alpha and Beta.'    
+            mlb.update()
+            mpb["value"]=9
+            mpb.update()    
+            dba.sliceSectorBetas()
+            end=time.time()
+            print 'Runtime:',end-start
+            
+            start=time.time()
             mlb["text"]='Treatment of NaN values.'    
             mlb.update()
             mpb["value"]=10
             mpb.update()    
-            dba.sp500_fillna()
-        
-            mlb["text"]='Calculating indicators.'    
+            dba.sp500fillna()
+            end=time.time()
+            print 'Runtime:',end-start
+            
+            start=time.time()
+            mlb["text"]='Slicing Index.'    
             mlb.update()
             mpb["value"]=11
+            mpb.update()    
+            dba.sliceIndex()
+            end=time.time()
+            print 'Runtime:',end-start
+            
+            start=time.time()
+            mlb["text"]='Calculating indicators.'    
+            mlb.update()
+            mpb["value"]=12
             mpb.update()        
-            dba.calc_indicators()
-
+            dba.calcIndicators()
+            end=time.time()
+            print 'Runtime:',end-start
 
             mlb["text"]='Done. Closing in 3 sec.'    
             mlb.update()
-            tm.sleep(1)
+            time.sleep(1)
             mlb["text"]='Done. Closing in 2 sec.'    
             mlb.update()
-            tm.sleep(1)
+            time.sleep(1)
             mlb["text"]='Done. Closing in 1 sec.'    
             mlb.update()
-            tm.sleep(1)
-            mpb["value"]=13
-            mpb.update()        
-            dba.get_index_composition()
+            time.sleep(1)
             
             self.mGui.destroy()
             self.mLabel.destroy()            

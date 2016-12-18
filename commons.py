@@ -1,6 +1,7 @@
 import pandas as pd
 import datetime as dt
 import csv
+import platform
 
 def init():
     global demo_scenario,sp500CompMatrix,refresh_data
@@ -69,11 +70,18 @@ def getWIKITicker(ticker):
         return ticker    
 
 def setPath():
-    global data_path,local_path,stats_path,model_path
-    data_path='C:/Users/kleme/Documents/HF_Trade/localdata/'
-    model_path='C:/Users/kleme/Documents/HF_Trade/localmodel/'
+    global data_path,local_path,stats_path,model_path,backup_path
+    if platform.node()=='DESKTOP-5HHG5ET':
+        backup_path='C:/Users/kleme/OneDrive/HF_Trading/RoboTrader/backup/'
+        data_path  ='C:/Users/kleme/OneDrive/HF_Trading/RoboTrader/data/'
+        model_path ='C:/Users/kleme/OneDrive/HF_Trading/RoboTrader/model/'
+        stats_path ='C:/Users/kleme/OneDrive/HF_Trading/RoboTrader/stats/'
+    elif 'Klemens' in platform.node():
+        backup_path='/Users/kncas/OneDrive/HF_Trading/RoboTrader/backup/'
+        data_path  ='/Users/kncas/OneDrive/HF_Trading/RoboTrader/data/'
+        model_path ='/Users/kncas/OneDrive/HF_Trading/RoboTrader/model/'
+        stats_path ='/Users/kncas/OneDrive/HF_Trading/RoboTrader/stats/'        
     local_path='./'
-    stats_path='./stats/'
     
 #read datafrom from disc
 def read_dataframe(file):

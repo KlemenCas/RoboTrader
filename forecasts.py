@@ -5,14 +5,14 @@ from sklearn.externals import joblib
 class forecast(object):
     trading_strategy='aggressiv'
     m=None
+    train_uuid=None
     
-    def __init__(self,market):  
+    def __init__(self,market,train_uuid):  
         self.m=market
+        self.train_uuid=train_uuid
 
     def get_order_price(self,dba,ticker,state,dix,action,closing_price):
-#        print '(ticker=='+"'"+str(ticker)+"'"+")"+' & (kpi=='+"'"+'_clr'+"')"
         clusters=dba.t_clusters.read_where('(ticker=='+"'"+str(ticker)+"'"+")"+' & (kpi=='+"'"+'_clr'+"')")
-#        closing_price=market.get_closing_price(ticker,dix)
         pct_change=0
         if self.trading_strategy=='aggressiv':
             if action==commons.action_code['buy']:
@@ -25,7 +25,7 @@ class forecast(object):
                             else:
                                 pct_change=row['c'+str(i)]
             if action==commons.action_code['sell']:                                           
-                clusters=dba.t_clusters.read_where('(ticker=='+"'"+str(ticker)+"'"+")"+' & (kpi=='+"'"+'_chr'+"')")
+                clusters=dba.t_clusters.read_where('(train_uuid=='+"'"+self.train_uuid+"')"+' & (ticker=='+"'"+str(ticker)+"'"+")"+' & (kpi=='+"'"+'_chr'+"')")
                 for row in clusters:
                     for i in range(0,5):
                         x=state['clr_cluster_'+str(i)]+2
@@ -91,7 +91,7 @@ class forecast(object):
         sp500_ticker=commons.getHistSp500Ticker(commons.date_index_external[dix])
         model1,model2,generic_model='','',''
         pca,generic_pca=0,0
-        models=t_stats.read_where('(train_uuid!='+"'"+'init'+"')"+' & (ticker=='+"'"+str(ticker)+"')"+' & (kpi=='+"'"+str(label)+"')")
+        models=t_stats.read_where('(train_uuid=='+"'"+self.train_uuid+"')"+' & (ticker=='+"'"+str(ticker)+"')"+' & (kpi=='+"'"+str(label)+"')")
         ticker_accuracy=0
         for row in models:
             if row['accuracy']>ticker_accuracy:
@@ -101,7 +101,7 @@ class forecast(object):
                 pca=row['pca']
 
 
-        models=t_stats.read_where('(train_uuid!='+"'"+'init'+"')"+' & (ticker=='+"'"+sp500_ticker[ticker]+"')"+' & (kpi=='+"'"+str(label)+"')")
+        models=t_stats.read_where('(train_uuid=='+"'"+self.train_uuid+"')"+' & (ticker=='+"'"+sp500_ticker[ticker]+"')"+' & (kpi=='+"'"+str(label)+"')")
         general_accuracy=0
         for row in models:
             if row['accuracy']>general_accuracy:

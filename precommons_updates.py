@@ -7,6 +7,7 @@ import tables
 import pandas as pd
 import quandl as Quandl
 import numpy as np
+import time
 
 Quandl.ApiConfig.api_key='QWQMKc-NYsoYgtfadPZs'
 
@@ -80,19 +81,19 @@ def loadSp500Data():
     data_sp500=commons.read_dataframe(commons.data_path+'WIKI_SP500.h5')
     maxDixPreWikiRefresh=dt.datetime.strptime('01/03/2006','%m/%d/%Y')
 
-def refresh_wiki_sp500(ticker,changes=False):
+def refreshWikiSp500(ticker,changes=False):
+    global date_index_internal, date_index_external
     global sp500Changes
     global sp500_ticker
     global data_sp500
     global maxDixPreWikiRefresh
     global changeItemsClean
     global regularItemsClean
-    global date_index_internal
     localItems=dict()
 
     if ticker=='all':
         if changes:
-            newChanges=sp500Changes.read_where('(dix>'+str(commons.date_index_internal[commons.max_date['WIKI_SP500']])+')')
+            newChanges=sp500Changes.read_where('(dix>'+str(date_index_internal[commons.max_date['WIKI_SP500']])+')')
     #        newChanges=sp500Changes.read_where('(dix>13782)')
     
             #has the sp500 composition changed?
@@ -100,7 +101,7 @@ def refresh_wiki_sp500(ticker,changes=False):
                 for row in newChanges:
                     item=dict()
                     if row['change']=='new':
-                        item['startdate']=commons.date_index_external[row['dix']]
+                        item['startdate']=date_index_external[row['dix']]
                         item['enddate']=max_date=max(data_sp500.index)
                         item['sector']=commons.sp500_index[row['sector']][-8:]
                     elif row['change']=='dropped':
@@ -111,21 +112,21 @@ def refresh_wiki_sp500(ticker,changes=False):
                         except AttributeError:
                             item['startdate']=commons.min_date
                         item['sector']=commons.sp500_index[row['sector']][-8:]
-                        item['enddate']=commons.date_index_external[row['dix']]
+                        item['enddate']=date_index_external[row['dix']]
                     if item['startdate']<=item['enddate']:
                         localItems['WIKI/'+row['ticker']]=item
                         changeItemsClean[k]=item
     
         else: #current sp500 members
-            max_date=max(data_sp500.index)
-            maxDixPreWikiRefresh=max(data_sp500.index)
+            max_date=commons.max_date['WIKI_SP500']
+            maxDixPreWikiRefresh=commons.max_date['WIKI_SP500']
         
             if max_date!=commons.idx_today:
                 #collect unknown days and update data_SP500
-                item = dict()
-                item['startdate']=max_date+dt.timedelta(days=1)
-                item['enddate']=commons.idx_today
                 for k,v in sp500_ticker.items():
+                    item = dict()
+                    item['startdate']=max_date+dt.timedelta(days=1)
+                    item['enddate']=commons.idx_today                    
                     item['sector']=commons.sp500_index[v][-8:]
                     localItems['WIKI/'+k]=item
                     regularItemsClean[k]=item            
@@ -202,16 +203,15 @@ def refresh_wiki_sp500(ticker,changes=False):
         print 'Ticker: ', ticker,' loaded.'
         #update storage    
     data_sp500=data_sp500.sort_index()
+    data_sp500=data_sp500.fillna(method='ffill')
+    data_sp500=data_sp500.fillna(method='backfill')
     data_sp500.to_hdf(commons.data_path+'WIKI_SP500.h5','table',mode='w')
     print 'sp500 data refreshed'
 
 
 def updateDateIndex():
-    global date_index_internal
-    global date_index_external
+    global date_index_internal, date_index_external
     global data_sp500
-    date_index_internal=dict()
-    date_index_external=dict()
     
     #maxI=max(date_index_external)
     maxI=0
@@ -230,21 +230,22 @@ def updateDateIndex():
             csvwriter.writerow([i,d])
     csvfile.close()       
 
-    try:
-        with open(commons.data_path+'dix.csv','r') as csvfile:
-            csvreader = csv.reader(csvfile, delimiter=',')
-            for row in csvreader:
-                date_index_internal[dt.datetime.strptime(row[1],'%Y-%m-%d %H:%M:%S')]=int(row[0])
-                date_index_external[int(row[0])]=dt.datetime.strptime(row[1],'%Y-%m-%d %H:%M:%S')
-        csvfile.close()     
-    except IOError:
-        a=1
+#    try:
+#        with open(commons.data_path+'dix.csv','r') as csvfile:
+#            csvreader = csv.reader(csvfile, delimiter=',')
+#            for row in csvreader:
+#                date_index_internal[dt.datetime.strptime(row[1],'%Y-%m-%d %H:%M:%S')]=int(row[0])
+#                date_index_external[int(row[0])]=dt.datetime.strptime(row[1],'%Y-%m-%d %H:%M:%S')
+#        csvfile.close()     
+#    except IOError:
+#        a=1
     
 
 def loadSp500Changes():
+    global date_index_internal, date_index_external
     global sp500Changes
     
-    with open(commons.local_path+'backup/sp500_changes.csv','r') as csvfile:
+    with open(commons.backup_path+'sp500_changes.csv','r') as csvfile:
         csvreader = csv.reader(csvfile, delimiter=',')
         for row in csvreader:
             ticker=cleanTicker(row[0])
@@ -252,9 +253,9 @@ def loadSp500Changes():
                 if cleanTicker(row[0])!=False:
                     sp500Changes.row['ticker']=cleanTicker(row[0])
                     try:
-                        sp500Changes.row['dix']=commons.date_index_internal[dt.datetime.strptime(row[2], '%m/%d/%Y')]
+                        sp500Changes.row['dix']=date_index_internal[dt.datetime.strptime(row[2], '%m/%d/%Y')]
                     except KeyError:
-                        sp500Changes.row['dix']=commons.date_index_internal[dt.datetime.strptime(row[2], '%m/%d/%Y')+dt.timedelta(days=1)]
+                        sp500Changes.row['dix']=date_index_internal[dt.datetime.strptime(row[2], '%m/%d/%Y')+dt.timedelta(days=1)]
                     sp500Changes.row['sector']=commons.sp500_index[row[1]][-8:]
                     sp500Changes.row['change']=row[3]
                     sp500Changes.row.append()
@@ -262,38 +263,43 @@ def loadSp500Changes():
     csvfile.close()
 
 def updateSp500Matrix():
+    global date_index_internal, date_index_external
     global regularItemsClean
     global changeItemsClean
     global sp500CompMatrix
+    global data_sp500
     items=dict(regularItemsClean,**changeItemsClean)
 
     sp500CompMatrix=commons.read_dataframe(commons.data_path+'SP500_COMP.h5')
+    maxIndex=max(sp500CompMatrix.index)
     for ticker,dates in items.items():
-        if dates['startdate']>max(sp500CompMatrix.index):
-            dates['startdate']=max(sp500CompMatrix.index)
+        if dates['startdate']>maxIndex:
+            dates['startdate']=maxIndex
         if dates['enddate']>max(data_sp500.index):
             dates['enddate']=max(data_sp500.index)
         for dix in range(date_index_internal[dates['startdate']],date_index_internal[dates['enddate']]+1):
                 sp500CompMatrix.ix[date_index_external[dix],ticker]=1
-    sp500CompMatrix.fillna(0)
+    sp500CompMatrix=sp500CompMatrix.fillna(0)
     sp500CompMatrix.to_hdf(commons.data_path+'SP500_COMP.h5','table',mode='w')  
     
     for sector,index in commons.sp500_index.items():
         index_t=index[-8:]
         sp500IndexMatrix=commons.read_dataframe(commons.data_path+'HIST_'+index_t+'.h5')
+        maxIndex=max(sp500IndexMatrix.index)
         for ticker,dates in items.items():
             if dates['sector']==index_t:
-                if dates['startdate']>max(sp500IndexMatrix.index):
-                    dates['startdate']=max(sp500IndexMatrix.index)
+                if dates['startdate']>maxIndex:
+                    dates['startdate']=maxIndex
                 if dates['enddate']>max(data_sp500.index):
                     dates['enddate']=max(data_sp500.index)
                 for dix in range(date_index_internal[dates['startdate']],date_index_internal[dates['enddate']]+1):
                         sp500IndexMatrix.ix[date_index_external[dix],ticker]=1
-        sp500IndexMatrix.fillna(0)
+        sp500IndexMatrix=sp500IndexMatrix.fillna(0)
         sp500IndexMatrix.to_hdf(commons.data_path+'HIST_'+index_t+'.h5','table',mode='w')          
         
 #only needed 1x at the introduction of the timeseries for index composition        
 def loadHistoricalSp500(self):
+    global date_index_internal, date_index_external
     data_sp500=commons.read_dataframe(commons.data_path+'WIKI_SP500.h5')
     dropped=list()
     with open(commons.local_path+'backup/SP500TickerDropped.csv','r') as csvfile:
@@ -340,8 +346,7 @@ def loadHistoricalSp500(self):
 def initSp500Matrix(writeFile=True):
     #set for those that were in the index all the time
     global sp500_ticker
-    global date_index_internal
-    global date_index_external
+    global date_index_internal, date_index_external
     fDict=dict()
     pList=list()
     for ticker, sector in sp500_ticker.items():
@@ -378,7 +383,7 @@ def initSp500Matrix(writeFile=True):
             try:
                 fDict[row['ticker']].sort()
                 for dates in fDict[row['ticker']]:
-#                    print 'ticker: ',row['ticker'],' startdate ',dates['startdate'],' enddate ', commons.date_index_external[row['dix']]
+#                    print 'ticker: ',row['ticker'],' startdate ',dates['startdate'],' enddate ', date_index_external[row['dix']]
                     if dates['startdate']<date_index_external[row['dix']] and\
                         dates['enddate']>date_index_external[row['dix']]:
                         dates['enddate']=date_index_external[row['dix']]
@@ -437,10 +442,13 @@ def initSp500Matrix(writeFile=True):
         csvwriter = csv.writer(csvfile, delimiter=',')
         for ticker,dates in fDict.items():
             for date in dates:
-                csvwriter.writerow([ticker,commons.date_index_internal[date['startdate']],commons.date_index_internal[date['enddate']]])
+                if date['enddate']>max(data_sp500.index):
+                   date['enddate']=max(data_sp500.index) 
+                csvwriter.writerow([ticker,date_index_internal[date['startdate']],date_index_internal[date['enddate']]])
     csvfile.close()       
     
 def initForeignSource():
+    global date_index_internal, date_index_external
     global data_sp500
     if 'FMCC' not in data_sp500.columns or 'FNMA' not in data_sp500.columns:
         df=pd.DataFrame([])
@@ -495,17 +503,18 @@ def getCloseFromSP1():
     data_sp500.to_hdf(commons.data_path+'WIKI_SP500.h5','table',mode='w')
 
 def loadBSC():
+    global date_index_internal, date_index_external
     data_sp500=commons.read_dataframe(commons.data_path+'WIKI_SP500.h5')
     data_sp500_marketcap=commons.read_dataframe(commons.data_path+'MARKETCAP.h5')
     dix=[11628,11586,11522,11459,11395,11334,11271,11208,11145,11083,11020]
     price=[2,80,120,145,150,162,150,142,140,115,110]
     cap=[240000000, 9830000000,11880000000,13970000000,17790000000,19050000000,18060000000,16250000000,16580000000,15520000000,12510000000]
     for i in range(0,len(dix)):
-        data_sp500.ix[commons.date_index_external[dix[i]],'BSC_Open']=price[i]
-        data_sp500.ix[commons.date_index_external[dix[i]],'BSC_Close']=price[i]
-        data_sp500.ix[commons.date_index_external[dix[i]],'BSC_Low']=price[i]
-        data_sp500.ix[commons.date_index_external[dix[i]],'BSC_High']=price[i]
-        data_sp500_marketcap.ix[commons.date_index_external[dix[i]],'BSC']=cap[i]
+        data_sp500.ix[date_index_external[dix[i]],'BSC_Open']=price[i]
+        data_sp500.ix[date_index_external[dix[i]],'BSC_Close']=price[i]
+        data_sp500.ix[date_index_external[dix[i]],'BSC_Low']=price[i]
+        data_sp500.ix[date_index_external[dix[i]],'BSC_High']=price[i]
+        data_sp500_marketcap.ix[date_index_external[dix[i]],'BSC']=cap[i]
     data_sp500=data_sp500.fillna(method='backfill')
     data_sp500_marketcap.fillna(method='ffill')
     data_sp500_marketcap.fillna(method='backfill')
@@ -513,30 +522,48 @@ def loadBSC():
     data_sp500_marketcap.to_hdf(commons.data_path+'MARKETCAP.h5','table',mode='w')
     
 
+date_index_internal=dict()
+date_index_external=dict()
 #execute
+start = time.time()
 regularItemsClean=dict()
 changeItemsClean=dict()
 
 loadSp500Composition()
 print 'composition read'
+
 initSp500Changes()
 print 'sp500 changes initialized'
+
 loadSp500Data()
 print 'sp500 data loaded'
-#initForeignSource()
-getCloseFromSP1()
-#loadBSC()
-#refresh_wiki_sp500('all') #update w/o changes
-#print 'sp500 data refreshed'
-#updateDateIndex()
-#print 'date index updated'
-#refresh_wiki_sp500('EOP')
-#loadSp500Changes()
-#print 'sp500 changes loaded'
-#initSp500Matrix(False)
-#initSp500Matrix()
+
+#initForeignSource() loads some tickers from yahoo and google. only needed 1x
+
+getCloseFromSP1() #for some tickers there is no data in wiki, but there is closing price in SP1
+
+#loadBSC() loads Bear Stearns. Only needed 1x
+refreshWikiSp500('all') #update w/o changes
+print 'sp500 data refreshed'
+
+updateDateIndex()
+print 'date index updated'
+
+######refreshWikiSp500('EOP') #single maintenance call, if onlt 1 ticker is missing
+
+loadSp500Changes()
+print 'sp500 changes loaded' #load of changes in SP500 index
+
+initSp500Matrix(False) #write the SP500_changes_dates.xls, to be used in various places for start/enddate calculation
+
+initSp500Matrix() #only needed 1x in the beginning
 #print 'sp500 matrix initialized'
-#refresh_wiki_sp500('all',True) #update of changes
-#print 'sp500 index change data refreshed'
+
+refreshWikiSp500('all',True) #update of WIKI changes
+print 'sp500 index change data refreshed'
+
 #updateSp500Matrix()
 #print 'sp500 matrix updated'
+
+end = time.time()
+print 'Execution time in secs:',end - start

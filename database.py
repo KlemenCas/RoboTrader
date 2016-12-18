@@ -27,9 +27,13 @@ class db(object):
     gamma=0
     
     def __init__(self,sim_uuid,read_mode='r+'):
+#        if read_mode=='x':
+#            self.read_mode='r+'
+#        else:
+        self.read_mode=read_mode            
+        
         self.sim_uuid=sim_uuid
-        self.read_mode=read_mode
-        self.init_db()
+        self.init_db(read_mode)            
         self.init_train_h_table()
         self.init_sim_h_table()
         self.init_stats_table()
@@ -48,9 +52,54 @@ class db(object):
         self.load_internal_ticker_ids()
         
 
-    def init_db(self):
+    def init_db(self,read_mode):
         self.db_main = tables.open_file(commons.stats_path+'simulation.h5', self.read_mode)
-
+#        if read_mode=='x':        
+#            self.db_main.remove_node('/', 't_stats')
+#            self.db_main.remove_node('/', 't_parameter')
+#            self.db_main.remove_node('/', 't_clusters')
+#            stats_desc={'train_uuid':tables.StringCol(32),
+#                        'pca':tables.IntCol(),
+#                        'ticker':tables.StringCol(10),
+#                        'model': tables.StringCol(3),
+#                        'kpi':   tables.StringCol(15),
+#                        'accuracy':tables.FloatCol()}
+#            self.t_stats=self.db_main.create_table('/','stats',stats_desc)
+#            self.t_stats.cols.ticker.create_index()
+#            self.t_stats.cols.kpi.create_index()
+#            print 'statistics table created.'
+#            cluster_desc={'train_uuid':tables.StringCol(32),
+#                          'ticker':tables.StringCol(10),
+#                          'kpi':tables.StringCol(15),
+#                          'c0':tables.FloatCol(),
+#                          'c1':tables.FloatCol(),
+#                          'c2':tables.FloatCol(),
+#                          'c3':tables.FloatCol(),
+#                          'c4':tables.FloatCol()}
+#            self.t_clusters=self.db_main.create_table('/','cluster_table',cluster_desc)
+#            self.t_clusters.cols.ticker.create_index()
+#            self.t_clusters.cols.kpi.create_index()
+#            print 'cluster table created.'            
+#            parameter_desc={'train_uuid':tables.StringCol(32),
+#                           'pca':tables.IntCol(),
+#                           'ticker':tables.StringCol(10),
+#                           'model':tables.StringCol(3),
+#                           'kpi':tables.StringCol(15),
+#                           'kernel':tables.StringCol(10),
+#                           'C':tables.IntCol(),
+#                           'max_depth':tables.IntCol(),
+#                           'n_neighbors':tables.IntCol(),
+#                           'weights':tables.StringCol(10),
+#                           'algorithm':tables.StringCol(10)}
+#
+#            self.t_parameter=self.db_main.create_table('/','parameter',parameter_desc)
+#            self.t_parameter.cols.train_uuid.create_index()
+#            self.t_parameter.cols.pca.create_index()
+#            self.t_parameter.cols.ticker.create_index()
+#            self.t_parameter.cols.model.create_index()
+#            self.t_parameter.cols.kpi.create_index()
+#            print 'parameter table created.'      
+            
 #transaction log
     def init_transaction_log(self):
         self.t_log=self.db_main.get_node('/','t_log')

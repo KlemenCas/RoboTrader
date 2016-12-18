@@ -8,29 +8,31 @@ from sklearn.preprocessing import MinMaxScaler
 
 class mydata(object):   
     Quandl.ApiConfig.api_key=''      
-    data_sp500_1st_date={}
+    df1st_date={}
     last_date=commons.max_date['WIKI_SP500']
     reload_baseline=False
     refresh_data=True
     demo_scenario=True
     sp500_change=dict()
-    data_sp500_1dr=pd.DataFrame()
-    data_sp500_5dr=pd.DataFrame()
-    data_sp500_20dr=pd.DataFrame()
-    data_sp500_5dm=pd.DataFrame()
-    data_sp500_sector_a_and_b=pd.DataFrame()
-    data_sp500_30dsma=pd.DataFrame()
-    data_sp500_30dmx=pd.DataFrame()
-    data_sp500_30dmn=pd.DataFrame()    
-    data_sp500_anb=pd.DataFrame()
-    data_sp500_bbands=pd.DataFrame()
-    data_sp500_clr=pd.DataFrame()
-    data_sp500_chr=pd.DataFrame()
-    data_sp500_ny_ss=pd.DataFrame()
-    data_sp500_ns_ss=pd.DataFrame()
-    data_sp500_1er=pd.DataFrame()
-    data_sp500_2er=pd.DataFrame()
-    data_sp500_5er=pd.DataFrame()    
+    df1dr=pd.DataFrame()
+    df5dr=pd.DataFrame()
+    df20dr=pd.DataFrame()
+    df5dm=pd.DataFrame()
+    dfSectorAnB=pd.DataFrame()
+    df30dsma=pd.DataFrame()
+    df30dmx=pd.DataFrame()
+    df30dmn=pd.DataFrame()    
+    dfanb=pd.DataFrame()
+    dfBbands=pd.DataFrame()
+    dfclr=pd.DataFrame()
+    dfchr=pd.DataFrame()
+    dfny_ss=pd.DataFrame()
+    dfns_ss=pd.DataFrame()
+    df1er=pd.DataFrame()
+    df2er=pd.DataFrame()
+    df5er=pd.DataFrame()   
+    dfSectorSliced=dict()
+    anbDict=dict()
 
         
         
@@ -38,15 +40,15 @@ class mydata(object):
         Quandl.ApiConfig.api_key=quandlkey
         self.demo_scenario=demo_scenario
         self.refresh_data=refresh_data
-        self.data_sp500_1st_date=commons.data_sp500_1st_date    
-        self.data_sp500=commons.read_dataframe(commons.data_path+'WIKI_SP500.h5')
-        self.data_sp500_sector=commons.read_dataframe(commons.data_path+'SECTOR_SP500.h5')
-        self.data_sp500_sentiment=commons.read_dataframe(commons.data_path+'SENT_SP500.h5')
-        self.data_sp500_fundamentals=commons.read_dataframe(commons.data_path+'FUND_SP500.h5')    
-        self.data_sp500_short_sell=commons.read_dataframe(commons.data_path+'SHORT_SP500.h5')
-        self.data_sp500_marketcap=commons.read_dataframe(commons.data_path+'MARKETCAP.h5')  
-        self.data_sp500_anb=commons.read_dataframe(commons.data_path+'anb.h5')  
-        self.data_last_calloff=commons.read_dataframe(commons.data_path+'last_calloff.h5')
+        self.df1st_date=commons.data_sp500_1st_date
+        self.dfWikiSp500=commons.read_dataframe(commons.data_path+'WIKI_SP500.h5')
+        self.dfSector=commons.read_dataframe(commons.data_path+'SECTOR_SP500.h5')
+        self.dfSentiment=commons.read_dataframe(commons.data_path+'SENT_SP500.h5')
+        self.dfFundamentals=commons.read_dataframe(commons.data_path+'FUND_SP500.h5')    
+        self.dfShortSell=commons.read_dataframe(commons.data_path+'SHORT_SP500.h5')
+        self.dfMarketcap=commons.read_dataframe(commons.data_path+'MARKETCAP.h5')  
+        self.dfanb=commons.read_dataframe(commons.data_path+'anb.h5')  
+        self.dfLastCalloff=commons.read_dataframe(commons.data_path+'last_calloff.h5')
         #select columns with low, high, open and close
         if commons.demo_scenario:
             column_selection=list()
@@ -57,10 +59,10 @@ class mydata(object):
                 column_selection.append(ticker+'_High')
         else:
             column_selection=list([])
-            for c in self.data_sp500.columns:
+            for c in self.dfWikiSp500.columns:
                 if c[-4:] in ['Open', 'lose', 'High', '_Low']:
                     column_selection.append(c)
-        self.data_sp500_prices=self.data_sp500.ix[:,column_selection]
+        self.dfPrices=self.dfWikiSp500.ix[:,column_selection]
          
 #this is the initial update from the bulk download from quandl. needs to be done only 1x        
     def process_quandl_csv(self):
@@ -79,7 +81,7 @@ class mydata(object):
             columns=str(k)+'_'+wiki.ix[k].columns
             df=pd.DataFrame(data=values,index=index,columns=columns)
             wiki_sp500=wiki_sp500.join(df,how='outer')
-            self.data_sp500_1st_date[k]=min(wiki.ix[k].index)
+            self.df1st_date[k]=min(wiki.ix[k].index)
         wiki_sp500.dropna(axis=0,how='all',inplace=True)
         wiki_sp500.to_hdf(commons.data_path+'WIKI_SP500.h5','table',mode='w')                    
         print 'WIKI based SP500 ticker data stored'
@@ -88,10 +90,10 @@ class mydata(object):
 
 #load index prices
     def getIndexData(self):
-        self.data_sp500_sector=commons.read_dataframe(commons.data_path+'SECTOR_SP500.h5')   
+        self.dfSector=commons.read_dataframe(commons.data_path+'SECTOR_SP500.h5')   
 
         if self.refresh_data==True:
-            enddate=commons.idx_today
+            enddate=commons.max_date['WIKI_SP500']
             startdate=commons.max_date['SECTOR_SP500']
 
             for k,v in commons.sp500_index.items():
@@ -100,13 +102,13 @@ class mydata(object):
                 df.columns=[str(v[-8:])+'_Open',str(v[-8:])+'_High',str(v[-8:])+'_Low',str(v[-8:])+'_Close',str(v[-8:])+'_Volume']
                 for c in df.columns:
                     if 'Volume' not in c:
-                        if c not in self.data_sp500_sector.columns:
-                            self.data_sp500_sector=self.data_sp500_sector.join(getattr(df,c),how='outer')
+                        if c not in self.dfSector.columns:
+                            self.dfSector=self.dfSector.join(getattr(df,c),how='outer')
                         else:
                             for i in df.index:
-                                self.data_sp500_sector.ix[i,c]=df.ix[i,c]
+                                self.dfSector.ix[i,c]=df.ix[i,c]
             
-            self.data_sp500_sector=self.processResults(df,self.data_sp500_sector,'SECTOR_SP500')
+            self.dfSector=self.processResults(df,self.dfSector,'SECTOR_SP500')
             print 'Index prices retrieved and stored'
         else:
             print 'Local index data loaded.'
@@ -114,18 +116,11 @@ class mydata(object):
 
 
 #load fundamentals            
-    def get_fundamentals(self):
-#commons.getSP1Ticker(ticker)!!        
-        self.data_last_calloff=commons.read_dataframe(commons.data_path+'last_calloff.h5')        
-        
+    def getFundamentals(self):
         if self.refresh_data==True:
-            #get fundamentals
-            if self.data_sp500_fundamentals.empty==True:
-                max_date=commons.max_date['FUND_SP500']
-            else:
-                max_date=max(list(self.data_last_calloff.query('fundamentals > 0').index))
-                
-                #collect unknown days and update data_SP500_fundamentals
+            startdate=commons.max_date['FUND_SP500']
+            enddate=commons.max_date['WIKI_SP500']
+
             fundamentals=list(['_PB_ARQ','_EPSDIL_ARQ'])
             items=list([])
             for fund in fundamentals:
@@ -140,7 +135,7 @@ class mydata(object):
                         itemList=items[i-100:i]
             
                     df=pd.DataFrame([])
-                    df=Quandl.get(itemList,start_date=max_date-dt.timedelta(days=1),end_date=commons.idx_today)
+                    df=Quandl.get(itemList,start_date=startdate,end_date=enddate)
                 
                     columns=list([])
                     for x in df.columns:
@@ -150,56 +145,47 @@ class mydata(object):
                         columns.append(x)
                     df.columns=columns
                 
-                    self.data_sp500_fundamentals=self.processResults(df,self.data_sp500_fundamentals,'FUND_SP500')                
+                    self.dfFundamentals=self.processResults(df,self.dfFundamentals,'FUND_SP500','ffill')                
 
-            self.data_last_calloff.ix[dt.datetime.today(),'fundamentals']=1
-            self.data_last_calloff.to_hdf(commons.data_path+'last_calloff.h5','table',mode='w')             
+            self.dfLastCalloff.ix[dt.datetime.today(),'fundamentals']=1
+            self.dfLastCalloff.to_hdf(commons.data_path+'last_calloff.h5','table',mode='w')             
             print 'Fundamentals data refreshed'
-                
-        else:                
-            print 'Fundamentals loaded'
 
 
 #load short selling    
-    def get_short_sell(self):
+    def getShortSell(self):
         if self.refresh_data==True:        
-            #get short sell
-            max_date=commons.max_date['SHORT_SP500']
+            startdate=commons.max_date['SHORT_SP500']
+            enddate=commons.max_date['WIKI_SP500']
 
             short_sell=list(['FINRA/FNSQ_','FINRA/FNYX_'])
             for s in short_sell:
-                items=list([])
-                for ticker in commons.getHistSp500TickerList(commons.date_index_internal[commons.max_date['SHORT_SP500']],commons.date_index_internal[commons.max_date['WIKI_SP500']]):
-                    items=[s+ticker]
-                    print items
+                items=list()
+                for ticker in commons.getHistSp500TickerList(commons.date_index_internal[startdate],commons.date_index_internal[enddate]):
+                    items.append(s+ticker)
             
-                    df=pd.DataFrame([])
-                    df=Quandl.get(items,start_date=max_date+dt.timedelta(days=1),end_date=dt.date.today())
-                    columns=list([])
-                    for x in df.columns:
-                        x=str(x).replace(' - ', '_')
-                        x=x.replace('FINRA/','')
-                        columns.append(x)
-                    df.columns=columns
+                df=pd.DataFrame()
+                df=Quandl.get(items,start_date=startdate,end_date=enddate)
+                columns=list([])
+                for x in df.columns:
+                    x=str(x).replace(' - ', '_')
+                    x=x.replace('FINRA/','')
+                    columns.append(x)
+                df.columns=columns
 
-                    self.data_sp500_short_sell=self.processResults(df,self.data_sp500_short_sell,'SHORT_SP500')
-
+                self.dfShortSell=self.processResults(df,self.dfShortSell,'SHORT_SP500')
             print 'Short sell data refreshed'
-        else:
-            print 'No new short sell data to collect'   
 
 #load sentiment                
-    def get_sentiment(self):
+    def getSentiment(self):
         if self.refresh_data==True:                  
-            #get sentiment
-            max_date=commons.max_date['SENT_SP500']
+            startdate=commons.max_date['SENT_SP500']
+            enddate=commons.max_date['WIKI_SP500']
                 
             df=pd.DataFrame([])
-            df=Quandl.get('AAII/AAII_SENTIMENT',start_date=max_date+dt.timedelta(days=1),end_date=commons.idx_today)
-            self.data_sp500_sentiment=self.processResults(df,self.data_sp500_sentiment,'SENT_SP500')
+            df=Quandl.get('AAII/AAII_SENTIMENT',start_date=startdate,end_date=enddate)
+            self.dfSentiment=self.processResults(df,self.dfSentiment,'SENT_SP500')
             print 'Sentiment data refreshed'
-        else:
-            print 'Sentiment data loaded.'                   
 
 
 #this is not really needed as we have no historical records to index composition. If we had them,
@@ -207,7 +193,7 @@ class mydata(object):
 
 
     def logSp500Changes(self):
-        maxDate=max(self.data_sp500.index)
+        maxDate=max(self.dfWikiSp500.index)
         with open(commons.local_path+'backup/sp500_changes.csv','r') as csvfile:
             csvreader=csv.reader(csvfile, delimiter=',')
             i=0
@@ -234,136 +220,99 @@ class mydata(object):
         print 'SP500 changes recorded.'        
 
 #NaN treatment
-    def sp500_fillna(self):
-        self.data_sp500=self.data_sp500.sort_index()
-        self.data_sp500_fundamentals=self.data_sp500_fundamentals.sort_index()
-        self.data_sp500_short_sell=self.data_sp500_short_sell.sort_index()
-        self.data_sp500_sentiment=self.data_sp500_sentiment.sort_index()
-        self.data_sp500_sector=self.data_sp500_sector.sort_index()
-        self.data_last_calloff=self.data_last_calloff.sort_index()
-        self.data_sp500_anb=self.data_sp500_anb.sort_index()
+    def sp500fillna(self):
+        self.dfWikiSp500=self.dfWikiSp500.sort_index()
+        self.dfFundamentals=self.dfFundamentals.sort_index()
+        self.dfShortSell=self.dfShortSell.sort_index()
+        self.dfSentiment=self.dfSentiment.sort_index()
+        self.dfSector=self.dfSector.sort_index()
+        self.dfLastCalloff=self.dfLastCalloff.sort_index()
+        self.dfanb=self.dfanb.sort_index()
 
         
-        self.data_sp500=self.data_sp500.fillna(method='backfill')
-        self.data_sp500_fundamentals=self.data_sp500_fundamentals.fillna(method='backfill')
-        self.data_sp500_short_sell=self.data_sp500_short_sell.fillna(method='backfill')
-        self.data_sp500_sentiment=self.data_sp500_sentiment.fillna(method='backfill')
-        self.data_sp500_sector=self.data_sp500_sector.fillna(method='backfill')
-        self.data_last_calloff=self.data_last_calloff.fillna(method='backfill')   
-        self.data_sp500_anb=self.data_sp500_anb.fillna(method='backfill')
+        self.dfWikiSp500=self.dfWikiSp500.fillna(method='backfill')
+        self.dfFundamentals=self.dfFundamentals.fillna(method='backfill')
+        self.dfShortSell=self.dfShortSell.fillna(method='backfill')
+        self.dfSentiment=self.dfSentiment.fillna(method='backfill')
+        self.dfSector=self.dfSector.fillna(method='backfill')
+        self.dfLastCalloff=self.dfLastCalloff.fillna(method='backfill')   
+        self.dfanb=self.dfanb.fillna(method='backfill')
         
-        self.data_sp500=self.data_sp500.fillna(method='ffill')
-        self.data_sp500_fundamentals=self.data_sp500_fundamentals.fillna(method='ffill')
-        self.data_sp500_short_sell=self.data_sp500_short_sell.fillna(method='ffill')
-        self.data_sp500_sentiment=self.data_sp500_sentiment.fillna(method='ffill')
-        self.data_sp500_sector=self.data_sp500_sector.fillna(method='ffill')
-        self.data_last_calloff=self.data_last_calloff.fillna(method='ffill')   
-        self.data_sp500_anb=self.data_sp500_anb.fillna(method='ffill')
+        self.dfWikiSp500=self.dfWikiSp500.fillna(method='ffill')
+        self.dfFundamentals=self.dfFundamentals.fillna(method='ffill')
+        self.dfShortSell=self.dfShortSell.fillna(method='ffill')
+        self.dfSentiment=self.dfSentiment.fillna(method='ffill')
+        self.dfSector=self.dfSector.fillna(method='ffill')
+        self.dfLastCalloff=self.dfLastCalloff.fillna(method='ffill')   
+        self.dfanb=self.dfanb.fillna(method='ffill')
         print 'FillNa on source data performed.'
         
 
 #calculate features and labels
-    def calc_indicators(self):     
-        self.data_sp500_fundamentals=self.checkDemoData('data_sp500_fundamentals')
-        self.data_sp500_short_sell=self.checkDemoData('data_sp500_short_sell')
-        self.data_sp500_sentiment=self.checkDemoData('data_sp500_sentiment')
-        self.data_sp500_sector=self.checkDemoData('data_sp500_sector')
-        self.data_sp500_anb=self.checkDemoData('data_sp500_anb')
+    def calcIndicators(self):     
+        self.dfFundamentals=self.checkDemoData('dfFundamentals')
+        self.dfShortSell=self.checkDemoData('dfShortSell')
+        self.dfSentiment=self.checkDemoData('dfSentiment')
+        self.dfSector=self.checkDemoData('dfSector')
+        self.dfanb=self.checkDemoData('dfanb')
         
-        #momentum 5 days
-        self.data_sp500_5dm=(self.data_sp500_prices-self.data_sp500_prices.shift(5))/self.data_sp500_prices.shift(5)
-        #momentum 2 days
-        self.data_sp500_2dm=(self.data_sp500_prices-self.data_sp500_prices.shift(2))/self.data_sp500_prices.shift(2)
-        #momentum 1 days
-        self.data_sp500_1dm=(self.data_sp500_prices-self.data_sp500_prices.shift(1))/self.data_sp500_prices.shift(1)
+        #momentum
+        self.df5dm=(self.dfPrices-self.dfPrices.shift(5))/self.dfPrices.shift(5)
+        self.df2dm=(self.dfPrices-self.dfPrices.shift(2))/self.dfPrices.shift(2)
+        self.df1dm=(self.dfPrices-self.dfPrices.shift(1))/self.dfPrices.shift(1)
         print 'Momentum calculated.'
         
         #delta to expected return
-        for k,sector in commons.sp500SectorAssignmentsTicker.items():        
-            select_columns=list([str(k)+'_Open',str(k)+'_Low',str(k)+'_High',str(k)+'_Close'])
-            df1=self.data_sp500_1dm.ix[:,select_columns]
-            df1.columns=list(['Open','Low','High','Close'])
-            
-            sector_column=list([str(sector[-8:])+'_Open',str(sector[-8:])+'_High',str(sector[-8:])+'_Low',str(sector[-8:])+'_Close'])
-            df2=self.data_sp500_sector.ix[:,sector_column]        
-            df2.columns=list(['Open','Low','High','Close'])
-            
-            select_columns=list(['B_'+str(k)+'_Open','B_'+str(k)+'_Low','B_'+str(k)+'_High','B_'+str(k)+'_Close'])
-            df3=self.data_sp500_anb.ix[:,select_columns]
-            df3.columns=list(['Open','Low','High','Close'])
-            
-            select_columns=list(['A_'+str(k)+'_Open','A_'+str(k)+'_Low','A_'+str(k)+'_High','A_'+str(k)+'_Close'])
-            df4=self.data_sp500_anb.ix[:,select_columns]
-            df4.columns=list(['Open','Low','High','Close'])
-            
-            df1=df1-((df2-df2.shift(1))/df2.shift(1)*df3+df4)
-            df1.columns=list([str(k)+'_Open',str(k)+'_Low',str(k)+'_High',str(k)+'_Close'])            
-            df1=df1
-            self.data_sp500_1er=self.data_sp500_1er.join(df1,how='outer')
-            
-            select_columns=list([str(k)+'_Open',str(k)+'_Low',str(k)+'_High',str(k)+'_Close'])
-            df1=self.data_sp500_2dm.ix[:,select_columns]
-            df1.columns=list(['Open','Low','High','Close'])
-
-            df1=df1-df1-((df2-df2.shift(2))/df2.shift(2)*df3+df4)
-            df1.columns=list([str(k)+'_Open',str(k)+'_Low',str(k)+'_High',str(k)+'_Close'])
-            df1=df1
-            self.data_sp500_2er=self.data_sp500_2er.join(df1,how='outer')
-            
-            
-            select_columns=list([str(k)+'_Open',str(k)+'_Low',str(k)+'_High',str(k)+'_Close'])
-            df1=self.data_sp500_5dm.ix[:,select_columns]
-            df1.columns=list(['Open','Low','High','Close'])
-
-            df1=df1-df1-((df2-df2.shift(5))/df2.shift(5)*df3+df4)
-            df1.columns=list([str(k)+'_Open',str(k)+'_Low',str(k)+'_High',str(k)+'_Close'])            
-            df1=df1
-            self.data_sp500_5er=self.data_sp500_5er.join(df1,how='outer')
+        for sector,tickerList in commons.getSp500CompositionAll().items():
+            index_t=commons.sp500_index[sector][-8:]
+            self.df1er=self.df1dm-((self.dfSectorSliced[index_t]-self.dfSectorSliced[index_t].shift(1))/self.dfSectorSliced[index_t].shift(1)*self.anbDict['B_']+self.anbDict['A_'])
+            self.df2er=self.df2dm-((self.dfSectorSliced[index_t]-self.dfSectorSliced[index_t].shift(2))/self.dfSectorSliced[index_t].shift(2)*self.anbDict['B_']+self.anbDict['A_'])
+            self.df5er=self.df5dm-((self.dfSectorSliced[index_t]-self.dfSectorSliced[index_t].shift(5))/self.dfSectorSliced[index_t].shift(5)*self.anbDict['B_']+self.anbDict['A_'])
         print 'Delta to expected return.'
         
         #sma 30 days
-        self.data_sp500_30dsma=self.data_sp500_prices/pd.DataFrame.rolling(self.data_sp500_prices,30).mean()
+        self.df30dsma=self.dfPrices/pd.DataFrame.rolling(self.dfPrices,30).mean()
         #comp to max and min 30 days
-        self.data_sp500_30dmx=self.data_sp500_prices/pd.DataFrame.rolling(self.data_sp500_prices,30).max()
-        self.data_sp500_30dmn=self.data_sp500_prices/pd.DataFrame.rolling(self.data_sp500_prices,30).min()
+        self.df30dmx=self.dfPrices/pd.DataFrame.rolling(self.dfPrices,30).max()
+        self.df30dmn=self.dfPrices/pd.DataFrame.rolling(self.dfPrices,30).min()
         #vola week
-        self.data_sp500_5dv=1-pd.DataFrame.rolling(self.data_sp500_prices,30).min()/pd.DataFrame.rolling(self.data_sp500_prices,30).max()
+        self.df5dv=1-pd.DataFrame.rolling(self.dfPrices,30).min()/pd.DataFrame.rolling(self.dfPrices,30).max()
         #bollinger bands
-        stock_rm_df=pd.DataFrame.rolling(self.data_sp500_prices,200).mean()
-        self.data_sp500_bbands=(self.data_sp500_prices-stock_rm_df)/(2*self.data_sp500_prices.std(axis=0))     
+        stock_rm_df=pd.DataFrame.rolling(self.dfPrices,200).mean()
+        self.dfbbands=(self.dfPrices-stock_rm_df)/(2*self.dfPrices.std(axis=0))     
         print 'min, max, sma, vola and bbbands calculated.'
         #returns for labels        
-        self.data_sp500_1dr=(self.data_sp500_prices.shift(-1)/self.data_sp500_prices-1).round(2)*100
-        self.data_sp500_5dr=(self.data_sp500_prices.shift(-5)/self.data_sp500_prices-1).round(2)*100
-        self.data_sp500_20dr=(self.data_sp500_prices.shift(-20)/self.data_sp500_prices-1).round(2)*100
+        self.df1dr=(self.dfPrices.shift(-1)/self.dfPrices-1).round(2)*100
+        self.df5dr=(self.dfPrices.shift(-5)/self.dfPrices-1).round(2)*100
+        self.df20dr=(self.dfPrices.shift(-20)/self.dfPrices-1).round(2)*100
         #directional labels
-        self.data_sp500_1dd=(self.data_sp500_prices.shift(-1)/self.data_sp500_prices-1)*100
-        self.data_sp500_5dd=(self.data_sp500_prices.shift(-5)/self.data_sp500_prices-1)*100
-        self.data_sp500_20dd=(self.data_sp500_prices.shift(-20)/self.data_sp500_prices-1)*100
+        self.df1dd=(self.dfPrices.shift(-1)/self.dfPrices-1)*100
+        self.df5dd=(self.dfPrices.shift(-5)/self.dfPrices-1)*100
+        self.df20dd=(self.dfPrices.shift(-20)/self.dfPrices-1)*100
         #close to low and close to high
         for k,v in commons.sp500SectorAssignmentsTicker.items():        
             #close to low and close to high
-            df1=pd.DataFrame(self.data_sp500_prices.ix[:,str(k)+'_Low'].shift(-1)/self.data_sp500_prices.ix[:,str(k)+'_Close']-1).round(2)*100
+            df1=pd.DataFrame(self.dfPrices.ix[:,str(k)+'_Low'].shift(-1)/self.dfPrices.ix[:,str(k)+'_Close']-1).round(2)*100
             df1.columns=list([str(k)+'_clr'])
-            self.data_sp500_clr=self.data_sp500_clr.join(df1,how='outer')
-            df1=pd.DataFrame(self.data_sp500_prices.ix[:,str(k)+'_High'].shift(-1)/self.data_sp500_prices.ix[:,str(k)+'_Close']-1).round(2)*100
+            self.dfclr=self.dfclr.join(df1,how='outer')
+            df1=pd.DataFrame(self.dfPrices.ix[:,str(k)+'_High'].shift(-1)/self.dfPrices.ix[:,str(k)+'_Close']-1).round(2)*100
             df1.columns=list([str(k)+'_chr'])
-            self.data_sp500_chr=self.data_sp500_chr.join(df1,how='outer')
+            self.dfchr=self.dfchr.join(df1,how='outer')
             
             #short %
             try:
-                df1=pd.DataFrame(self.data_sp500_short_sell.ix[:,'FNSQ_'+str(k)+'_ShortVolume']/self.data_sp500_short_sell.ix[:,'FNSQ_'+str(k)+'_TotalVolume'])*10
+                df1=pd.DataFrame(self.dfShortSell.ix[:,'FNSQ_'+str(k)+'_ShortVolume']/self.dfShortSell.ix[:,'FNSQ_'+str(k)+'_TotalVolume'])*10
                 df1.columns=list([str(k)+'_ns_ss'])
-                self.data_sp500_ns_ss=self.data_sp500_ns_ss.join(df1,how='outer')
-                df1=pd.DataFrame(self.data_sp500_short_sell.ix[:,'FNYX_'+str(k)+'_ShortVolume']/self.data_sp500_short_sell.ix[:,'FNYX_'+str(k)+'_TotalVolume'])*10
+                self.dfns_ss=self.dfns_ss.join(df1,how='outer')
+                df1=pd.DataFrame(self.dfShortSell.ix[:,'FNYX_'+str(k)+'_ShortVolume']/self.dfShortSell.ix[:,'FNYX_'+str(k)+'_TotalVolume'])*10
                 df1.columns=list([str(k)+'_ny_ss'])
-                self.data_sp500_ny_ss=self.data_sp500_ny_ss.join(df1,how='outer')
+                self.dfny_ss=self.dfny_ss.join(df1,how='outer')
             except KeyError:
                 print 'Short Sell data for: ',k,' missing.'
                 df1=pd.DataFrame(columns=[str(k)+'_ns_ss'])
-                self.data_sp500_ns_ss=self.data_sp500_ns_ss.join(df1,how='outer')
+                self.dfns_ss=self.dfns_ss.join(df1,how='outer')
                 df1=pd.DataFrame(columns=[str(k)+'_ny_ss'])
-                self.data_sp500_ny_ss=self.data_sp500_ns_ss.join(df1,how='outer')
+                self.dfny_ss=self.dfns_ss.join(df1,how='outer')
                 
             
 
@@ -373,28 +322,28 @@ class mydata(object):
         #drop outliers; top and bottom 1%    
         a=list(['1dm','2dm','5dm','30dsma','30dmx','30dmn','5dv','bbands','clr','chr','ny_ss','ns_ss','1er','2er','5er'])
         for x in a:
-            setattr(self,'data_sp500_'+str(x),self.drop_outliers(getattr(self,'data_sp500_'+str(x))))
+            setattr(self,'df'+str(x),self.drop_outliers(getattr(self,'df'+str(x))))
                 
         
         #fill, minmax and direction
         a=list(['1dm','2dm','5dm','30dsma','30dmx','30dmn','5dv','bbands','1dd','5dd','20dd','clr','chr','ny_ss','ns_ss','1er','2er','5er'])
         for x in a:
-            setattr(self,'data_sp500_'+str(x),getattr(self,'data_sp500_'+str(x)).fillna(method='backfill'))
-            setattr(self,'data_sp500_'+str(x),getattr(self,'data_sp500_'+str(x)).fillna(method='ffill'))
+            setattr(self,'df'+str(x),getattr(self,'df'+str(x)).fillna(method='backfill'))
+            setattr(self,'df'+str(x),getattr(self,'df'+str(x)).fillna(method='ffill'))
             
         a=list(['1dm','2dm','5dm','30dsma','30dmx','30dmn','5dv','bbands'])
         for x in a:
             try:
-                setattr(self,'data_sp500_'+str(x),self.minmaxscale('data_sp500_'+str(x)))
+                setattr(self,'df'+str(x),self.minmaxscale('df'+str(x)))
             except ValueError:
-                print 'MinMax value error in data_sp500_'+str(x)
-                getattr(self,'data_sp500_'+str(x)).to_hdf(commons.data_path+'data_sp500_'+str(x)+'.h5','table',mode='w')
+                print 'MinMax value error in df'+str(x)
+                getattr(self,'df'+str(x)).to_hdf(commons.data_path+'df'+str(x)+'.h5','table',mode='w')
                 
 
         a=list(['1dd','5dd','20dd'])
         for x in a: 
-            setattr(self,'data_sp500_'+str(x),self.p_direction(getattr(self,'data_sp500_'+str(x))))
-            setattr(self,'data_sp500_'+str(x),self.n_direction(getattr(self,'data_sp500_'+str(x))))
+            setattr(self,'df'+str(x),self.p_direction(getattr(self,'df'+str(x))))
+            setattr(self,'df'+str(x),self.n_direction(getattr(self,'df'+str(x))))
             
         l_i=505
         for k,v in commons.sp500SectorAssignmentsTicker.items():     
@@ -407,13 +356,25 @@ class mydata(object):
             
         #self.drop_obsolete_anb()#only needed 1x due to obsolete index.
 
+        
+    def sliceIndex(self):
+        iList=list(['_Open','_Close','_Low','_High'])
+        for sector,tickerList in commons.getSp500CompositionAll().items():
+            index_t=commons.sp500_index[sector][-8:]
+            df=pd.DataFrame()
+            cList=list()
+            for t in tickerList:
+                for i in iList:
+                    df.ix[:,t+i]=self.dfSector.ix[:,index_t+i]
+            self.dfSectorSliced[index_t]=df
+        
 #individual alpha and beta, compared to the industry
     def calcRollingSectorBeta(self,startdate,ticker):
         stock_column=list([ticker+'_Open',ticker+'_High',ticker+'_Low',ticker+'_Close'])
-        stock_df=self.data_sp500_prices.ix[commons.anb_min_date:,stock_column]
+        stock_df=self.dfPrices.ix[commons.anb_min_date:,stock_column]
         stock_df.columns=list(['Open','High','Low','Close'])
         sector_column=list([commons.sp500SectorAssignmentsTicker[ticker]+'_Open',commons.sp500SectorAssignmentsTicker[ticker]+'_High',commons.sp500SectorAssignmentsTicker[ticker]+'_Low',commons.sp500SectorAssignmentsTicker[ticker]+'_Close'])
-        sector_df=self.data_sp500_sector.ix[commons.anb_min_date:,sector_column]
+        sector_df=self.dfSector.ix[commons.anb_min_date:,sector_column]
         sector_df.columns=list(['Open','High','Low','Close'])
         #resample
         dfsm=pd.DataFrame()
@@ -439,39 +400,56 @@ class mydata(object):
             anb=anb.join(df2,how='outer')
         return anb        
 
-#alphas and betas, calls self.calc_sector_beta()
+    def sliceSectorBetas(self):
+        i1List=list(['A_','B_'])
+        i2List=list(['_Open','_Close','_Low','_High'])
+        for i1 in i1List:
+            tList=list()
+            xList=list()            
+            for i2 in i2List:
+                for ticker,sector in commons.sp500SectorAssignmentsTicker.items():
+                    xList.append(i1+ticker+i2)
+                    tList.append(ticker+i2)
+            self.anbDict[i1]=self.dfanb.ix[:,xList]
+            self.anbDict[i1].columns=tList
+            self.anbDict[i1].to_hdf(commons.data_path+i1+'anb.h5','table',mode='w')
+
+        #alphas and betas, calls self.calc_sector_beta()
     def calcSectorBetas(self):
-        self.data_sp500_anb=pd.DataFrame() #reset anb
-        startdate=commons.getClosestDate(commons.min_date+dt.timedelta(days=-365))
+        self.dfanb=pd.DataFrame() #reset anb
         #calc by ticker
+        cList=list()
         for ticker,sector in commons.sp500SectorAssignmentsTicker.items():
-            print 'Calculating Alpha and Beta for: ',ticker
+            startdate=commons.getClosestDate(commons.data_sp500_1st_date[ticker]+dt.timedelta(days=-365))
             anb=self.calcRollingSectorBeta(startdate,ticker)
-            self.data_sp500_anb=self.data_sp500_anb.join(anb,how='outer')
+            self.dfanb=self.dfanb.join(anb,how='outer')
         dfIndex=list()
-        for dix in range(commons.date_index_internal[commons.min_date],commons.date_index_internal[max(self.data_sp500.index)]):
+        for dix in range(commons.date_index_internal[commons.min_date],commons.date_index_internal[commons.max_date['WIKI_SP500']]):
            dfIndex.append(commons.date_index_external[dix]) 
         df1=pd.DataFrame(index=dfIndex)
-        self.data_sp500_anb=self.data_sp500_anb.join(df1,how='outer')            
-        self.data_sp500_anb.to_hdf(commons.data_path+'anb.h5','table',mode='w')
+        self.dfanb=self.dfanb.join(df1,how='outer')  
+        self.dfanb=self.dfanb.sort_index()
+        self.dfanb=self.dfanb.fillna(method='ffill')
+        self.dfanb=self.dfanb.fillna(method='backfill')
+        self.dfanb.to_hdf(commons.data_path+'anb.h5','table',mode='w')
         print 'Alpha and Beta have been calculated and stored locally'
 
         
 #needed to know from when onwards stats can be calculated and forecasts can be made. 1st date with known prices
-    def calc_sp500_1st_date(self):
+    def calcSp5001stDate(self):
         for ticker,dates in commons.sp500CompDates.items():
             min_date=commons.date_index_external[1]
             for date in dates:
                 if min_date<date[0]:
                     min_date=date[0]
-            self.data_sp500_1st_date[ticker]=min_date
+            self.df1st_date[ticker]=min_date
 
         for k,v in commons.sp500_index.items():
-            self.data_sp500_1st_date[v[-8:]]=commons.min_date
+            self.df1st_date[v[-8:]]=commons.min_date
             
         with open(commons.data_path+'sp500_1st_date.csv','w') as csvfile:
             csvwriter = csv.writer(csvfile, delimiter=',')
-            for k,v in self.data_sp500_1st_date.items():
+            for k,v in self.df1st_date.items():
                 csvwriter.writerow([k,v])
             csvfile.close()
         print '1st dates recorded'
@@ -498,17 +476,17 @@ class mydata(object):
 
 
 #for the assembly of Xy
-    def calc_fundamentals(self,ticker,indicator):
+    def calcFundamentals(self,ticker,indicator):
         comp=commons.getSp500CompositionAll()        
         for k,v in commons.getIndexCodes().items():
             columns=list([])
             for t in comp[k]:
                 columns.append(str(t)+indicator)
-        if self.data_sp500_1st_date[ticker]<min(self.data_sp500_fundamentals.index):
-            min_date=min(self.data_sp500_fundamentals.index)
+        if self.df1st_date[ticker]<min(self.dfFundamentals.index):
+            min_date=min(self.dfFundamentals.index)
         else:
-            min_date=self.data_sp500_1st_date[ticker]   
-        ret=self.data_sp500_fundamentals.ix[min_date:,columns].mean(axis=1).to_frame()
+            min_date=self.df1st_date[ticker]   
+        ret=self.dfFundamentals.ix[min_date:,columns].mean(axis=1).to_frame()
         ret.columns=list([str(indicator).strip('_ARQ')])
         return ret
         
@@ -521,8 +499,8 @@ class mydata(object):
         #sentiment            
         select_columns=list(['Bull-Bear Spread'])
         target_columns=list(['Bull_Bear_Spread'])
-        np1=self.data_sp500_sentiment.ix[self.data_sp500_1st_date[ticker]:,select_columns].values
-        id1=self.data_sp500_sentiment.ix[self.data_sp500_1st_date[ticker]:,select_columns].index
+        np1=self.dfSentiment.ix[self.df1st_date[ticker]:,select_columns].values
+        id1=self.dfSentiment.ix[self.df1st_date[ticker]:,select_columns].index
         df1=pd.DataFrame(data=np1,index=id1,columns=target_columns)
         df1=pd.DataFrame(data=min_max_scaler.fit_transform(df1).round(2),index=df1.index,columns=df1.columns)
         df=df.join(df1,how='outer')   
@@ -532,14 +510,14 @@ class mydata(object):
         for x in a:
             select_columns=list([str(ticker)+str(x)])
             target_columns=list([str(x).strip('_ARQ')])
-            if self.data_sp500_1st_date[ticker]<min(self.data_sp500_fundamentals.index):
-                min_date=min(self.data_sp500_fundamentals.index)
+            if self.df1st_date[ticker]<min(self.dfFundamentals.index):
+                min_date=min(self.dfFundamentals.index)
             else:
-                min_date=self.data_sp500_1st_date[ticker]
-            np1=self.data_sp500_fundamentals.ix[min_date:,select_columns].values
-            id1=self.data_sp500_fundamentals.ix[min_date:,select_columns].index
+                min_date=self.df1st_date[ticker]
+            np1=self.dfFundamentals.ix[min_date:,select_columns].values
+            id1=self.dfFundamentals.ix[min_date:,select_columns].index
             df1=pd.DataFrame(data=np1,index=id1,columns=target_columns)
-            df1=df1/self.calc_fundamentals(ticker,x)-1
+            df1=df1/self.calcFundamentals(ticker,x)-1
             np1=np.nan_to_num(df1.values)
             df1=pd.DataFrame(data=np1,index=id1,columns=target_columns)            
             df=df.fillna(method='backfill')
@@ -553,19 +531,19 @@ class mydata(object):
         a=list(['1dm','2dm','5dm','30dsma','30dmx','30dmn','5dv','bbands','1er','2er','5er'])
         for x in a:
             target_columns=list([str(x)+'_Open',str(x)+'_Low',str(x)+'_High',str(x)+'_Close'])
-            np1=getattr(self,'data_sp500_'+str(x)).ix[self.data_sp500_1st_date[ticker]:,select_columns].values
-            id1=getattr(self,'data_sp500_'+str(x)).ix[self.data_sp500_1st_date[ticker]:,select_columns].index
+            np1=getattr(self,'df'+str(x)).ix[self.df1st_date[ticker]:,select_columns].values
+            id1=getattr(self,'df'+str(x)).ix[self.df1st_date[ticker]:,select_columns].index
             df1=pd.DataFrame(data=min_max_scaler.fit_transform(np.nan_to_num(np1)),index=id1,columns=target_columns)
             df=df.join(df1,how='outer')
             
-        a=list(['_ns_ss','_ny_ss'])
+        a=list(['ns_ss','ny_ss'])
         for x in a:
             select_columns=list([str(ticker)+str(x)])
             target_columns=list([str(x)])
-            np1=getattr(self,'data_sp500'+str(x)).ix[self.data_sp500_1st_date[ticker]:,select_columns].values
+            np1=getattr(self,'df'+str(x)).ix[self.df1st_date[ticker]:,select_columns].values
             np1=np.nan_to_num(np1)
             np1=np1.astype(int)   
-            id1=getattr(self,'data_sp500'+str(x)).ix[self.data_sp500_1st_date[ticker]:,select_columns].index
+            id1=getattr(self,'df'+str(x)).ix[self.df1st_date[ticker]:,select_columns].index
             df1=pd.DataFrame(data=np1,index=id1,columns=target_columns)
             df=df.join(df1,how='outer')                 
 
@@ -573,20 +551,20 @@ class mydata(object):
         a=list(['1dr','5dr','20dr','1dd','5dd','20dd'])
         for x in a:
             target_columns=list([str(x)+'_Open',str(x)+'_Low',str(x)+'_High',str(x)+'_Close'])
-            np1=getattr(self,'data_sp500_'+str(x)).ix[self.data_sp500_1st_date[ticker]:,select_columns].values
+            np1=getattr(self,'df'+str(x)).ix[self.df1st_date[ticker]:,select_columns].values
             np1=np.nan_to_num(np1)
             np1=np1.astype(int)            
-            id1=getattr(self,'data_sp500_'+str(x)).ix[self.data_sp500_1st_date[ticker]:,select_columns].index
+            id1=getattr(self,'df'+str(x)).ix[self.df1st_date[ticker]:,select_columns].index
             df1=pd.DataFrame(data=np1,index=id1,columns=target_columns)
             df=df.join(df1,how='outer')
             
-        a=list(['_clr','_chr'])
+        a=list(['clr','chr'])
         for x in a:
-            select_columns=list([str(ticker)+str(x)])
+            select_columns=list([str(ticker)+'_'+str(x)])
             target_columns=list([str(x)])
-            np1=getattr(self,'data_sp500'+str(x)).ix[self.data_sp500_1st_date[ticker]:,select_columns].values
+            np1=getattr(self,'df'+str(x)).ix[self.df1st_date[ticker]:,select_columns].values
             np1=np1.astype(int)
-            id1=getattr(self,'data_sp500'+str(x)).ix[self.data_sp500_1st_date[ticker]:,select_columns].index
+            id1=getattr(self,'df'+str(x)).ix[self.df1st_date[ticker]:,select_columns].index
             df1=pd.DataFrame(data=np1,index=id1,columns=target_columns)
             df=df.join(df1,how='outer')            
         
@@ -610,11 +588,11 @@ class mydata(object):
             items=dict()
             for t in tickers:
                 dates=dict()
-                if t not in self.data_sp500_marketcap.columns: #collect whole history for new tickers
+                if t not in self.dfMarketcap.columns: #collect whole history for new tickers
                     dates['startdate']=commons.min_date
                 else:
                     dates['startdate']=commons.max_date['MARKETCAP']
-                dates['enddate']=commons.idx_today
+                dates['enddate']=commons.max_date['WIKI_SP500']
                 items['SF1/'+t+'_MARKETCAP']=dates
         
             consItems=dict() #cosolidate items to have less calls
@@ -641,7 +619,7 @@ class mydata(object):
                         columns=list([])
                         for x in df1.columns:
                             if 'Not Found' in x:
-                                print x
+                                print 'MarketCap to:',x,'not found.'
                             x=str(x).replace(' - ', '_')
                             x=x.replace('SF1/','')
                             x=x.replace('_Value','')
@@ -649,17 +627,17 @@ class mydata(object):
                             columns.append(x)
                         df1.columns=columns
                         
-                        self.data_sp500_marketcap=self.processResults(df1,self.data_sp500_marketcap,'MARKETCAP',first='ffill')                   
+                        self.dfMarketcap=self.processResults(df1,self.dfMarketcap,'MARKETCAP',first='ffill')                   
             print 'Marketcap data refreshed'      
       
 
 
 #calculate index composition and store        
-    def get_index_composition(self):
+    def getIndexComposition(self):
         for k,v in commons.sp500_index.items():
             index_t=v[-8:]
             indexComp=commons.read_dataframe(commons.data_path+'HIST_'+index_t+'.h5')
-            relMarketCap=self.data_sp500_marketcap.ix[indexComp.index,indexComp.columns]
+            relMarketCap=self.dfMarketcap.ix[indexComp.index,indexComp.columns]
             dailySum=(indexComp*relMarketCap).sum(axis=1)
             marketCap=indexComp*relMarketCap
             for c in indexComp.columns:
@@ -694,7 +672,7 @@ class mydata(object):
     def processResults(self,df,target,filename,first='backfill'):
         for c in df.columns:
             if 'Not Found' in c:
-                a=1
+                print 'Fundamentals to:',c
             else:
                 if c in target.columns:
                     for i in df.index:
@@ -723,18 +701,18 @@ class mydata(object):
 
         if not commons.demo_scenario:
             return getattr(self,frame)
-        elif frame=='data_sp500_sector':
+        elif frame=='dfSector':
             columns.append('ARCA_VOX'+'_Low')
             columns.append('ARCA_VOX'+'_High')
             columns.append('ARCA_VOX'+'_Open')
             columns.append('ARCA_VOX'+'_Close')
             return getattr(self,frame).ix[:,columns]
-        elif frame=='data_sp500_fundamentals':
+        elif frame=='dfFundamentals':
             for ticker in commons.getHistSp500TickerList(1,1,False):
                 columns.append(ticker+'_EPSDIL_ARQ')
                 columns.append(ticker+'_PB_ARQ')
             return getattr(self,frame).ix[:,columns]
-        elif frame=='data_sp500_short_sell':
+        elif frame=='dfShortSell':
             for ticker in commons.getHistSp500TickerList(1,1,False):
                 columns.append('FNSQ_'+ticker+'_ShortVolume')
                 columns.append('FNSQ_'+ticker+'_ShortExemptVolume')
@@ -743,11 +721,11 @@ class mydata(object):
                 columns.append('FNYX_'+ticker+'_ShortExemptVolume')
                 columns.append('FNYX_'+ticker+'_TotalVolume')
             return getattr(self,frame).ix[:,columns]                
-        elif frame=='data_sp500_marketcap':
+        elif frame=='dfMarketcap':
             for ticker in commons.getHistSp500TickerList(1,1,False):
                 columns.append(ticker)
             return getattr(self,frame).ix[:,columns]                
-        elif frame=='data_sp500_anb':
+        elif frame=='dfanb':
             for ticker in commons.getHistSp500TickerList(1,1,False):
                 columns.append('B_'+ticker+'_Open')
                 columns.append('B_'+ticker+'_Close')
@@ -758,5 +736,5 @@ class mydata(object):
                 columns.append('A_'+ticker+'_Low')
                 columns.append('A_'+ticker+'_High')
             return getattr(self,frame).ix[:,columns]        
-        elif frame=='data_sp500_sentiment':
+        elif frame=='dfSentiment':
             return getattr(self,frame)

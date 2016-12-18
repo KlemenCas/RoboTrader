@@ -4,9 +4,10 @@ from database import db
 from forecasts import forecast
 from portfolio import investments
 import uuid
+from trainSection import cl_trainSection 
 
-def play_for_a_day(idx_external,dix,alpha,gamma,sim_uuid):
-#    print 'Processing date: ',commons.date_index_external[dix]
+def play_for_a_day(idx_external,dix,alpha,gamma,sim_uuid,train_uuid):
+    global f
     temperature=1.5
     state=dict()
     proposed_action=dict()
@@ -124,7 +125,6 @@ for simrun in range(1,10):
     
     initial_budget=100000
     m=stock_market(dba,initial_budget,True)
-    f=forecast(m)
 
     new_state=dict()
     p=investments(initial_budget,m,11084,dba,sim_uuid)
@@ -132,13 +132,18 @@ for simrun in range(1,10):
     dba.new_simulation(sim_uuid,commons.date_index_internal[commons.max_date['WIKI_SP500']],11084,commons.date_index_internal[commons.max_date['WIKI_SP500']])
 
     runningyear=0
-    for dix in range(11084,commons.date_index_internal[commons.max_date['WIKI_SP500']]):
+    for dix in range(11624,commons.date_index_internal[commons.max_date['WIKI_SP500']]):
+        if (dix-4)%10==0:
+            newTraining=cl_trainSection(dix)
+            f=forecast(m,newTraining)
+            train_uuid=newTraining.train()
+            
         if commons.date_index_external[dix].year!=runningyear:
             maxsim=getMaxSimrun(dba)
             print 'Simulation for year:',commons.date_index_external[dix].year,'started. Simulation:',maxsim
         runningyear=commons.date_index_external[dix].year
 
-        if dix!=11084:
+        if dix!=11624:
             m.align_index_portfolio(dix)
             
         p.log_portfolio(dix,sim_uuid)
@@ -161,5 +166,5 @@ for simrun in range(1,10):
             dba.s_log.row.append()
             dba.s_log.flush()
             
-            play_for_a_day(k,dix, alpha, gamma,sim_uuid)
+            play_for_a_day(k,dix, alpha, gamma,sim_uuid,train_uuid)
                     

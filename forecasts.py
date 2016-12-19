@@ -13,10 +13,11 @@ class forecast(object):
         
     def trained(self,dba,train_uuid,ticker):
         found=False
-        stats=dba.t_stats.read_where('(train_uuid=='+"'"+self.train_uuid+"')"+' & (ticker=='+"'"+str(ticker)+"'"+")"+' & (kpi=='+"'"+'1dd_Close'+"')")
+        stats=dba.t_stats.read_where('(ticker=='+"'"+str(ticker)+"'"+")"+' & (kpi=='+"'"+'1dd_Close'+"')")
         for row in stats:
-            found=True
-            break
+            if str(self.train_uuid)==row['train_uuid']:
+                found=True
+                break
         return found
         
     def getActionUntrained(self,p,sector,ticker,dix):
@@ -87,16 +88,16 @@ class forecast(object):
                 model_key=model[0]
                 X_t=self.transform_X(ticker,X,model[3])
                 try:
-                    clf=joblib.load(commons.local_path+'models/'+model_key+'.pkl')
+                    clf=joblib.load(commons.model_path+model_key+'.pkl')
                 except IOError:
 #                    print 'using model w/o pca no'
                     model_key=model[1]
                     try:
-                        clf=joblib.load(commons.local_path+'models/'+model_key+'.pkl')
+                        clf=joblib.load(commons.model_path+model_key+'.pkl')
                     except IOError:
                         model_key=model[2]
                         X_t=self.transform_X(ticker,X,model[4])
-                        clf=joblib.load(commons.local_path+'models/'+model_key+'.pkl')
+                        clf=joblib.load(commons.model_path+model_key+'.pkl')
                     
                 state[y]=clf.predict(X_t.reshape(1,-1))
                 state[y]=float(state[y])
@@ -111,14 +112,15 @@ class forecast(object):
         sp500_ticker=commons.getHistSp500Ticker(commons.date_index_external[dix])
         model1,model2,generic_model='','',''
         pca,generic_pca=0,0
-        models=t_stats.read_where('(train_uuid=='+"'"+self.train_uuid+"')"+' & (ticker=='+"'"+str(ticker)+"')"+' & (kpi=='+"'"+str(label)+"')")
+        models=t_stats.read_where('(ticker=='+"'"+str(ticker)+"')"+' & (kpi=='+"'"+str(label)+"')")
         ticker_accuracy=0
         for row in models:
-            if row['accuracy']>ticker_accuracy:
-                ticker_accuracy=row['accuracy']
-                model1=str(row['pca'])+'_'+row['model']+'_'+ticker+'_'+label
-                model2=row['model']+'_'+ticker+'_'+label
-                pca=row['pca']
+            if str(self.train_uuid)==row['train_uuid']:
+                if row['accuracy']>ticker_accuracy:
+                    ticker_accuracy=row['accuracy']
+                    model1=str(row['pca'])+'_'+row['model']+'_'+ticker+'_'+label
+                    model2=row['model']+'_'+ticker+'_'+label
+                    pca=row['pca']
 
 
         models=t_stats.read_where('(train_uuid=='+"'"+self.train_uuid+"')"+' & (ticker=='+"'"+sp500_ticker[ticker]+"')"+' & (kpi=='+"'"+str(label)+"')")
@@ -133,7 +135,7 @@ class forecast(object):
                 
     def transform_X(self,ticker,X,pca):
         if pca!=0:
-            pca=joblib.load(commons.local_path+'models/'+str(pca)+'_PCA_'+ticker+'.pkl')
+            pca=joblib.load(commons.model_path+str(pca)+'_PCA_'+ticker+'.pkl')
             X=pca.transform(X.reshape(1,-1))
         return X
         

@@ -5,6 +5,7 @@ from forecasts import forecast
 from portfolio import investments
 import uuid
 from trainSection import cl_trainSection 
+import time
 
 def play_for_a_day(idx_external,dix,alpha,gamma,sim_uuid,train_uuid):
     global f
@@ -146,10 +147,15 @@ for simrun in range(1,10):
     runningyear=0
     for dix in range(11624,commons.date_index_internal[commons.max_date['WIKI_SP500']]):
         if (dix-4)%10==0:
+            print 'Retraining the models. Date:',commons.date_index_external[dix]
+            start=time.time()
             train_uuid=uuid.uuid1().hex
+            #train_uuid='0cb4a5aec5a111e68f65c82a142bddcf'
             newTraining=cl_trainSection(dix,train_uuid)
             f=forecast(m,train_uuid)
             newTraining.train()
+            end=time.time()
+            print 'Training took',end-start,'seconds.'
             
         if commons.date_index_external[dix].year!=runningyear:
             maxsim=getMaxSimrun(dba)

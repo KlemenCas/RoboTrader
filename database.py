@@ -55,6 +55,7 @@ class db(object):
 
     def init_db(self,read_mode):
         self.db_main = tables.open_file(commons.stats_path+'simulation.h5', self.read_mode)
+        print 'database opened.'
 #        if read_mode=='x':        
 #            self.db_main.remove_node('/', 't_stats')
 #            self.db_main.remove_node('/', 't_parameter')
@@ -104,72 +105,72 @@ class db(object):
 #transaction log
     def init_transaction_log(self):
         self.t_log=self.db_main.get_node('/','t_log')
-        print 'transaction log opened.'  
+#        print 'transaction log opened.'  
 
 #noTrade log
     def init_noTrade(self):
         self.noTrade=self.db_main.get_node('/','noTrade')
-        print 'noTrade table opened.'  
+#        print 'noTrade table opened.'  
         
         
 #simulation log
     def init_simulation_log(self):
         self.s_log=self.db_main.get_node('/','s_log')
-        print 'simulation log opened.'  
+#        print 'simulation log opened.'  
 
         #index log
     def init_index_log(self):
         self.i_log=self.db_main.get_node('/','i_log')
-        print 'index log opened.'   
+#        print 'index log opened.'   
         
 #portfolio log
     def init_portfolio_log(self):
         self.p_log=self.db_main.get_node('/','p_log')
-        print 'portfolio log opened.'         
+#        print 'portfolio log opened.'         
 #parameter header
     def init_parameter_table(self):
         self.t_parameter=self.db_main.get_node('/','parameter')
-        print 'parameter table opened.'
+#        print 'parameter table opened.'
             
 #training header
     def init_train_h_table(self):
         self.t_train_h=self.db_main.get_node('/','train_h')
-        print 'train header table opened.'
+#        print 'train header table opened.'
 
 #simulation header
     def init_sim_h_table(self):
         self.t_sim_h=self.db_main.get_node('/','sim_h')
-        print 'simulation header table opened.'
+#        print 'simulation header table opened.'
 
 #recommendations
     def init_recommendation_table(self):
         self.t_recommend=self.db_main.get_node('/','recommend')
-        print 'recommendation table opened.'
+#        print 'recommendation table opened.'
             
 #accuracy stats            
     def init_stats_table(self):
         self.t_stats=self.db_main.get_node('/','stats')
-        print 'stats table opened.'
+#        print 'stats table opened.'
             
 
     def init_ticker_ids_table(self):
         self.t_ticker_ids=self.db_main.get_node('/','ticker_symbols')            
-        print 'ticker symbols table opened.'
+#        print 'ticker symbols table opened.'
             
 
     def init_q_table(self):
         self.t_q=self.db_main.get_node('/','q_table')
-        print 'q table opened.'
+#        print 'q table opened.'
 
                 
     def init_q_log(self):
         self.q_log=self.db_main.get_node('/','q_log')
-        print 'q_log table opened.'
+#        print 'q_log table opened.'
             
             
     def init_cluster_table(self):
         self.t_clusters=self.db_main.get_node('/','cluster_table')
-        print 'cluster table exists already.'
+#        print 'cluster table exists already.'
                 
     def load_internal_ticker_ids(self):
         for ticker in commons.getHistSp500TickerList(commons.min_date,commons.min_date,False):

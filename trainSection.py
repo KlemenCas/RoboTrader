@@ -114,7 +114,7 @@ class cl_trainSection(object):
                 pca=PCA(n_components=lPca)
                 pca=pca.fit(X_all)
                 X_all=pd.DataFrame(data=pca.transform(X_all),index=X_all.index)
-                joblib.dump(pca,commons.data_path+str(lPca)+'_PCA_'+ticker+'.pkl',compress=3)
+                joblib.dump(pca,commons.model_path+str(lPca)+'_PCA_'+ticker+'.pkl',compress=3)
                 del pca
 
         #get labels and drop the % forecast, as not relevant for the investment decision
@@ -186,7 +186,7 @@ class cl_trainSection(object):
                     scorer = make_scorer(mean_squared_error)            
             
                     for y in y_all.columns:
-                        print '-'+str(y)
+#                        print '-'+str(y)
                         #get training data
                         X_train, X_test, y_train, y_test = train_test_split(X_all, y_all[y], train_size = .7, random_state = 1) 
                         #SVC                            

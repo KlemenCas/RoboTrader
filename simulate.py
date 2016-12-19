@@ -149,7 +149,7 @@ for simrun in range(1,10):
             train_uuid=uuid.uuid1().hex
             newTraining=cl_trainSection(dix,train_uuid)
             f=forecast(m,train_uuid)
-            train_uuid=newTraining.train()
+            newTraining.train()
             
         if commons.date_index_external[dix].year!=runningyear:
             maxsim=getMaxSimrun(dba)

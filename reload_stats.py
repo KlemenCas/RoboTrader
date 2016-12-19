@@ -41,6 +41,7 @@ class db(object):
         self.init_index_log()
         self.init_simulation_log()
         self.init_sp500Changes()
+        self.init_noTrade()
         self.db_main.flush()
 
     def init_db(self):
@@ -61,6 +62,18 @@ class db(object):
             sp500Changes=self.db_main.get_node('/','sp500Changes')
             print 'sp500Changes opened.'   
 
+#no trade
+    def init_noTrade(self):
+        try:
+            desc={'ticker':tables.StringCol(10),
+                  'dix':tables.IntCol()}
+            self.noTrade=self.db_main.create_table('/','noTrade',desc)
+            self.noTrade.cols.ticker.create_index()
+            self.noTrade.cols.dix.create_index(kind='full')            
+            print 'noTrade table created.'
+        except tables.exceptions.NodeError:
+            noTrade=self.db_main.get_node('/','noTrade')
+            print 'noTrade opened.'   
             
 #simulation log
     def init_simulation_log(self):

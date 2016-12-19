@@ -10,6 +10,26 @@ class forecast(object):
     def __init__(self,market,train_uuid):  
         self.m=market
         self.train_uuid=train_uuid
+        
+    def trained(self,dba,train_uuid,ticker):
+        found=False
+        stats=dba.t_stats.read_where('(train_uuid=='+"'"+self.train_uuid+"')"+' & (ticker=='+"'"+str(ticker)+"'"+")"+' & (kpi=='+"'"+'1dd_Close'+"')")
+        for row in stats:
+            found=True
+            break
+        return found
+        
+    def getActionUntrained(self,p,sector,ticker,dix):
+        pct=commons.read_dataframe(commons.data_path+'PCT_'+sector+'h5')
+        try:
+            actualVol=p.portfolio[ticker]
+        except KeyError:
+            actualVol=0
+        targetVol=int((p.get_portfolio_value(sector,dix)+p.cash[sector])*pct.ix[commons.date_index_external[dix],'ticker']/self.m.get_closing_price(ticker,dix))
+        if actualVol>=targetVol:
+            return commons.action_code['sell'],(actualVol-targetVol)
+        else:
+            return commons.action_code['buy'],(targetVol-actualVol)
 
     def get_order_price(self,dba,ticker,state,dix,action,closing_price):
         clusters=dba.t_clusters.read_where('(ticker=='+"'"+str(ticker)+"'"+")"+' & (kpi=='+"'"+'_clr'+"')")

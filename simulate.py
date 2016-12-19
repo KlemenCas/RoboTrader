@@ -13,6 +13,7 @@ def play_for_a_day(idx_external,dix,alpha,gamma,sim_uuid,train_uuid):
     proposed_action=dict()
     order_entry=dict()
     order_random=dict()
+    order_untrained=dict()
     reward=dict()
     dba.db_main.flush()
     random_action=dict()
@@ -21,7 +22,7 @@ def play_for_a_day(idx_external,dix,alpha,gamma,sim_uuid,train_uuid):
 
     for ticker in commons.getHistSp500Composition(commons.date_index_external[dix])[index_t]:
         reward[ticker]=9999
-        if commons.data_sp500_1st_date[ticker]<=commons.date_index_external[dix]:
+        if f.trained(dba,train_uuid,ticker):
             try:
                 state[ticker]=new_state[ticker]
             except KeyError:
@@ -51,7 +52,7 @@ def play_for_a_day(idx_external,dix,alpha,gamma,sim_uuid,train_uuid):
 
                 except KeyError:
                     p.portfolio[index_t][ticker]=0
-                    print 'New Ticker: ', ticker
+                    print 'New Ticker: ', ticker                        
     
     #buy, but only after everythin has been sold        
             if proposed_action[ticker]==commons.action_code['buy']:
@@ -60,14 +61,25 @@ def play_for_a_day(idx_external,dix,alpha,gamma,sim_uuid,train_uuid):
                 else:
                     order_random[ticker]=m.get_opening_price(ticker,next_dix)
                 dba.log_recommendation(sim_uuid,dix,ticker,commons.action_code['buy']) 
-                
+
+        else: #for the tickers that are not trained yet align with the index
+            action=f.getActionUntrained(p,index_t,ticker,dix,)
+            if action[0]==commons.action_code['buy']:
+                order_untrained[ticker]=m.get_opening_price(ticker,next_dix)
+            elif action[0]==commons.action_code['sell']:
+                x=p.execute_order(ticker,action[1],next_dix,m.get_opening_price(ticker,next_dix),commons.action_code['sell'],m.get_closing_price(ticker,dix))     
+            
     #allocate money for the randoms
     for ticker,opening_price in order_random.items():
         forecast_price=f.get_order_price(dba,ticker,state[ticker],dix,commons.action_code['buy'],m.get_closing_price(ticker,dix))
         if order_random[ticker]*1.01<forecast_price:
             forecast_price=order_random[ticker]*1.01
         reward[ticker]=p.execute_order(ticker,1,next_dix,forecast_price,commons.action_code['buy'],m.get_closing_price(ticker,dix))
-    
+
+    #allocate for alignment
+    for ticker,opening_price in order_untrained.items():
+        x=p.execute_order(ticker,action[1],next_dix,m.get_opening_price(ticker,next_dix),commons.action_code['buy'],m.get_closing_price(ticker,dix))
+
     budget=dict()
     for k,v in commons.getIndexCodes().items():
         index_t=v[-8:]
@@ -97,7 +109,7 @@ def play_for_a_day(idx_external,dix,alpha,gamma,sim_uuid,train_uuid):
 #on the way to the next q
     dix+=1
     for ticker in commons.getHistSp500Composition(commons.date_index_external[dix])[index_t]:
-        if commons.data_sp500_1st_date[ticker]<=commons.date_index_external[dix]:
+        if f.trained(dba,train_uuid,ticker):
             new_state[ticker]=f.get_forecast_state(dba.t_stats,ticker,dix)
             try:
                 if reward[ticker]!=9999:
@@ -129,7 +141,7 @@ for simrun in range(1,10):
     new_state=dict()
     p=investments(initial_budget,m,11084,dba,sim_uuid)
 
-    dba.new_simulation(sim_uuid,commons.date_index_internal[commons.max_date['WIKI_SP500']],11084,commons.date_index_internal[commons.max_date['WIKI_SP500']])
+    dba.new_simulation(sim_uuid,commons.date_index_internal[commons.max_date['WIKI_SP500']],11624,commons.date_index_internal[commons.max_date['WIKI_SP500']])
 
     runningyear=0
     for dix in range(11624,commons.date_index_internal[commons.max_date['WIKI_SP500']]):

@@ -50,6 +50,7 @@ class db(object):
         if self.read_mode=='w':
             self.load_ticker_ids()
         self.load_internal_ticker_ids()
+        self.init_noTrade()
         
 
     def init_db(self,read_mode):
@@ -105,6 +106,12 @@ class db(object):
         self.t_log=self.db_main.get_node('/','t_log')
         print 'transaction log opened.'  
 
+#noTrade log
+    def init_noTrade(self):
+        self.noTrade=self.db_main.get_node('/','noTrade')
+        print 'noTrade table opened.'  
+        
+        
 #simulation log
     def init_simulation_log(self):
         self.s_log=self.db_main.get_node('/','s_log')

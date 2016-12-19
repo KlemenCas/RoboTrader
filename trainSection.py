@@ -109,12 +109,13 @@ class cl_trainSection(object):
         X_all=Xy_all.ix[:,:-8]
 
         #reduce dimension space?
-        if lPca!=0:
-            pca=PCA(n_components=lPca)
-            pca=pca.fit(X_all)
-            X_all=pca.transform(X_all)
-            joblib.dump(pca,commons.data_path+str(lPca)+'_PCA_'+ticker+'.pkl',compress=3)
-            del pca
+        if len(X_all.index)>250:
+            if lPca!=0:
+                pca=PCA(n_components=lPca)
+                pca=pca.fit(X_all)
+                X_all=pd.DataFrame(data=pca.transform(X_all),index=X_all.index)
+                joblib.dump(pca,commons.data_path+str(lPca)+'_PCA_'+ticker+'.pkl',compress=3)
+                del pca
 
         #get labels and drop the % forecast, as not relevant for the investment decision
         y_all=Xy_all.ix[:,-8:]
@@ -176,116 +177,122 @@ class cl_trainSection(object):
                 l_i-=1
     
                 Xy_all=self.getXy(mode,modes,k,dates,l_pca)
-                X_all=Xy_all[0]
-                y_all=Xy_all[1]
-                y_all=self.prepY(y_all,l_pca,k)
-        
-                #train        
-                scorer = make_scorer(mean_squared_error)            
-        
-                for y in y_all.columns:
-                    print '-'+str(y)
-                    #get training data
-                    X_train, X_test, y_train, y_test = train_test_split(X_all, y_all[y], train_size = .7, random_state = 1) 
-                    #SVC                            
-                    parameters=dict()
-                    if (self.get_parameters(l_pca,k,'SVC',y)):
-                       print 'Trained already.'                        
-                    else:
-                        clf = SVC()                                                                                
-                        parameters = {'kernel':['linear', 'poly', 'rbf', 'sigmoid'], 'C':[1,10,100]}
-                        grid_obj = GridSearchCV(clf, parameters, scoring = scorer, n_jobs=1)
-                        grid_obj = grid_obj.fit(X_all, y_all[y])
-                        clf = grid_obj.best_estimator_
-                        self.stats_kf[y]=self.predict_labels(clf, X_test, y_test)
-                        self.write_parameters(l_pca,k,'SVC',y,grid_obj.best_params_)
-                        self.write_log(l_pca,k,'SVC',y,self.stats_kf[y])
-                        self.stats_model['SVC']=self.stats_kf
-                        joblib.dump(clf,commons.model_path+str(l_pca)+'_SVC_'+str(k)+'_'+str(y)+'.pkl',compress=3)
-                        del grid_obj,clf
-                        self.dba.t_parameter.flush()
-        
-        #        #Random Forest
-                    parameters=dict()
-                    if (self.get_parameters(l_pca,k,'RF',y)):
-                       print 'Trained already.'                        
-                    else:                
-                        parameters = {'max_depth':(1,2,3,4,5,6,7,8,9)}
-                        clf=RandomForestClassifier()
-                        grid_obj = GridSearchCV(clf,parameters,scoring = scorer)
-                        grid_obj = grid_obj.fit(X_train, y_train)
-                        clf=grid_obj.best_estimator_
-                        self.stats_kf[y]=self.predict_labels(clf, X_test, y_test)
-                        self.write_parameters(l_pca,k,'RF',y,grid_obj.best_params_)                
-                        self.write_log(l_pca,k,'RF',y,self.stats_kf[y])                
-                        joblib.dump(clf,commons.model_path+str(l_pca)+'_RF_'+str(k)+'_'+str(y)+'.pkl',compress=3)
-                        del clf
-                        self.stats_model['RF']=self.stats_kf
-                        self.dba.t_parameter.flush()
-        
-        #        #Decision Tree                
-                    parameters=dict()
-                    if (self.get_parameters(l_pca,k,'DT',y)):
-                       print 'Trained already.'                        
-                    else:
-                        parameters = {'max_depth':(1,2,3,4,5,6,7,8,9)}
-                        clf=tree.DecisionTreeClassifier()
-                        grid_obj = GridSearchCV(clf,parameters,scoring = scorer)
-                        grid_obj = grid_obj.fit(X_train, y_train)
-                        clf=grid_obj.best_estimator_
-                        self.stats_kf[y]=self.predict_labels(clf, X_test, y_test)
-                        self.write_parameters(l_pca,k,'DT',y,grid_obj.best_params_)
-                        self.write_log(l_pca,k,'DT',y,self.stats_kf[y])                
-                        joblib.dump(clf,commons.model_path+str(l_pca)+'_DT_'+str(k)+'_'+str(y)+'.pkl',compress=3)
-                        del clf
-                        self.stats_model['DT']=self.stats_kf
-                        self.dba.t_parameter.flush()
-        
-        #        #AdaBoost
-                    parameters=dict()
-                    if (self.get_parameters(l_pca,k,'AB',y)):
-                       print 'Trained already.'                        
-                    else:
-                        clf=AdaBoostClassifier(n_estimators=100)
-                        clf=clf.fit(X_train, y_train)
-                        self.stats_kf[y]=self.predict_labels(clf, X_test, y_test)
-                        self.write_log(l_pca,k,'AB',y,self.stats_kf[y])          
-                        self.write_parameters(l_pca,k,'AB',y,dict())                    
-                        joblib.dump(clf,commons.model_path+str(l_pca)+'_AB_'+str(k)+'_'+str(y)+'.pkl',compress=3)
-                        del clf        
-                        self.stats_model['AB']=self.stats_kf      
-                        self.dba.t_parameter.flush()
-        
-        #        #kNeighbors
-                    parameters=dict()
-                    if (self.get_parameters(l_pca,k,'kN',y)):
-                       print 'Trained already.'                        
-                    else:
-                        parameters = {'n_neighbors':(3,4,5,6,7,8),'weights':('uniform','distance'),'algorithm':('auto', 'ball_tree', 'kd_tree', 'brute')}
-                        clf=KNeighborsClassifier()
-                        grid_obj = GridSearchCV(clf,parameters,scoring = scorer)
-                        grid_obj = grid_obj.fit(X_train, y_train)
-                        clf=grid_obj.best_estimator_
-                        self.stats_kf[y]=self.predict_labels(clf, X_test, y_test)
-                        self.write_parameters(l_pca,k,'kN',y,grid_obj.best_params_)
-                        self.write_log(l_pca,k,'kN',y,self.stats_kf[y])                
-                        joblib.dump(clf,commons.model_path+str(l_pca)+'_kN_'+str(k)+'_'+str(y)+'.pkl',compress=3)
-                        del clf 
-                        self.stats_model['kN']=self.stats_kf
-                        self.dba.t_parameter.flush()
-        
-        #        #GaussianNB
-                    parameters=dict()
-                    if (self.get_parameters(l_pca,k,'GNB',y)):
-                       print 'Trained already.'                        
-                    else:
-                        clf=GaussianNB()
-                        clf=clf.fit(X_train, y_train)
-                        self.stats_kf[y]=self.predict_labels(clf, X_test, y_test)
-                        self.write_log(l_pca,k,'GNB',y,self.stats_kf[y])                
-                        self.write_parameters(l_pca,k,'GNB',y,dict(),)                    
-                        joblib.dump(clf,commons.model_path+str(l_pca)+'_GNB_'+str(k)+'_'+str(y)+'.pkl',compress=3)
-                        self.stats_model['GNB']=self.stats_kf
-                        self.dba.t_parameter.flush()
-                self.stats_accuracy[k]=self.stats_model
+                if len(Xy_all[0].index)>250:
+                    X_all=Xy_all[0]
+                    y_all=Xy_all[1]
+                    y_all=self.prepY(y_all,l_pca,k)
+            
+                    #train        
+                    scorer = make_scorer(mean_squared_error)            
+            
+                    for y in y_all.columns:
+                        print '-'+str(y)
+                        #get training data
+                        X_train, X_test, y_train, y_test = train_test_split(X_all, y_all[y], train_size = .7, random_state = 1) 
+                        #SVC                            
+                        parameters=dict()
+                        if (self.get_parameters(l_pca,k,'SVC',y)):
+                           print 'Trained already.'                        
+                        else:
+                            clf = SVC()                                                                                
+                            parameters = {'kernel':['linear', 'poly', 'rbf', 'sigmoid'], 'C':[1,10,100]}
+                            grid_obj = GridSearchCV(clf, parameters, scoring = scorer, n_jobs=1)
+                            grid_obj = grid_obj.fit(X_all, y_all[y])
+                            clf = grid_obj.best_estimator_
+                            self.stats_kf[y]=self.predict_labels(clf, X_test, y_test)
+                            self.write_parameters(l_pca,k,'SVC',y,grid_obj.best_params_)
+                            self.write_log(l_pca,k,'SVC',y,self.stats_kf[y])
+                            self.stats_model['SVC']=self.stats_kf
+                            joblib.dump(clf,commons.model_path+str(l_pca)+'_SVC_'+str(k)+'_'+str(y)+'.pkl',compress=3)
+                            del grid_obj,clf
+                            self.dba.t_parameter.flush()
+            
+            #        #Random Forest
+                        parameters=dict()
+                        if (self.get_parameters(l_pca,k,'RF',y)):
+                           print 'Trained already.'                        
+                        else:                
+                            parameters = {'max_depth':(1,2,3,4,5,6,7,8,9)}
+                            clf=RandomForestClassifier()
+                            grid_obj = GridSearchCV(clf,parameters,scoring = scorer)
+                            grid_obj = grid_obj.fit(X_train, y_train)
+                            clf=grid_obj.best_estimator_
+                            self.stats_kf[y]=self.predict_labels(clf, X_test, y_test)
+                            self.write_parameters(l_pca,k,'RF',y,grid_obj.best_params_)                
+                            self.write_log(l_pca,k,'RF',y,self.stats_kf[y])                
+                            joblib.dump(clf,commons.model_path+str(l_pca)+'_RF_'+str(k)+'_'+str(y)+'.pkl',compress=3)
+                            del clf
+                            self.stats_model['RF']=self.stats_kf
+                            self.dba.t_parameter.flush()
+            
+            #        #Decision Tree                
+                        parameters=dict()
+                        if (self.get_parameters(l_pca,k,'DT',y)):
+                           print 'Trained already.'                        
+                        else:
+                            parameters = {'max_depth':(1,2,3,4,5,6,7,8,9)}
+                            clf=tree.DecisionTreeClassifier()
+                            grid_obj = GridSearchCV(clf,parameters,scoring = scorer)
+                            grid_obj = grid_obj.fit(X_train, y_train)
+                            clf=grid_obj.best_estimator_
+                            self.stats_kf[y]=self.predict_labels(clf, X_test, y_test)
+                            self.write_parameters(l_pca,k,'DT',y,grid_obj.best_params_)
+                            self.write_log(l_pca,k,'DT',y,self.stats_kf[y])                
+                            joblib.dump(clf,commons.model_path+str(l_pca)+'_DT_'+str(k)+'_'+str(y)+'.pkl',compress=3)
+                            del clf
+                            self.stats_model['DT']=self.stats_kf
+                            self.dba.t_parameter.flush()
+            
+            #        #AdaBoost
+                        parameters=dict()
+                        if (self.get_parameters(l_pca,k,'AB',y)):
+                           print 'Trained already.'                        
+                        else:
+                            clf=AdaBoostClassifier(n_estimators=100)
+                            clf=clf.fit(X_train, y_train)
+                            self.stats_kf[y]=self.predict_labels(clf, X_test, y_test)
+                            self.write_log(l_pca,k,'AB',y,self.stats_kf[y])          
+                            self.write_parameters(l_pca,k,'AB',y,dict())                    
+                            joblib.dump(clf,commons.model_path+str(l_pca)+'_AB_'+str(k)+'_'+str(y)+'.pkl',compress=3)
+                            del clf        
+                            self.stats_model['AB']=self.stats_kf      
+                            self.dba.t_parameter.flush()
+            
+            #        #kNeighbors
+                        parameters=dict()
+                        if (self.get_parameters(l_pca,k,'kN',y)):
+                           print 'Trained already.'                        
+                        else:
+                            parameters = {'n_neighbors':(3,4,5,6,7,8),'weights':('uniform','distance'),'algorithm':('auto', 'ball_tree', 'kd_tree', 'brute')}
+                            clf=KNeighborsClassifier()
+                            grid_obj = GridSearchCV(clf,parameters,scoring = scorer)
+                            grid_obj = grid_obj.fit(X_train, y_train)
+                            clf=grid_obj.best_estimator_
+                            self.stats_kf[y]=self.predict_labels(clf, X_test, y_test)
+                            self.write_parameters(l_pca,k,'kN',y,grid_obj.best_params_)
+                            self.write_log(l_pca,k,'kN',y,self.stats_kf[y])                
+                            joblib.dump(clf,commons.model_path+str(l_pca)+'_kN_'+str(k)+'_'+str(y)+'.pkl',compress=3)
+                            del clf 
+                            self.stats_model['kN']=self.stats_kf
+                            self.dba.t_parameter.flush()
+            
+            #        #GaussianNB
+                        parameters=dict()
+                        if (self.get_parameters(l_pca,k,'GNB',y)):
+                           print 'Trained already.'                        
+                        else:
+                            clf=GaussianNB()
+                            clf=clf.fit(X_train, y_train)
+                            self.stats_kf[y]=self.predict_labels(clf, X_test, y_test)
+                            self.write_log(l_pca,k,'GNB',y,self.stats_kf[y])                
+                            self.write_parameters(l_pca,k,'GNB',y,dict(),)                    
+                            joblib.dump(clf,commons.model_path+str(l_pca)+'_GNB_'+str(k)+'_'+str(y)+'.pkl',compress=3)
+                            self.stats_model['GNB']=self.stats_kf
+                            self.dba.t_parameter.flush()
+                    self.stats_accuracy[k]=self.stats_model
+                else:
+                    self.dba.noTrade.row['ticker']=k
+                    self.dba.noTrade.row['dix']=self.cutoffdix
+                    self.dba.noTrade.row.append()
+                    self.dba.noTrade.flush()
         return self.train_uuid

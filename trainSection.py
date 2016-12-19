@@ -23,9 +23,9 @@ class cl_trainSection(object):
     stats_model=dict()
     stats_kf=dict()    
     
-    def __init__(self,cutoffdix):
+    def __init__(self,cutoffdix,train_uuid):
         self.cutoffdix=cutoffdix
-        self.train_uuid=uuid.uuid1().hex
+        self.train_uuid=train_uuid
         self.dba=db(self.train_uuid,'r+')
 
     def predict_labels(self,clf,X,y):
@@ -295,4 +295,3 @@ class cl_trainSection(object):
                     self.dba.noTrade.row['dix']=self.cutoffdix
                     self.dba.noTrade.row.append()
                     self.dba.noTrade.flush()
-        return self.train_uuid

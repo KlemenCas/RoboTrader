@@ -146,8 +146,9 @@ for simrun in range(1,10):
     runningyear=0
     for dix in range(11624,commons.date_index_internal[commons.max_date['WIKI_SP500']]):
         if (dix-4)%10==0:
-            newTraining=cl_trainSection(dix)
-            f=forecast(m,newTraining)
+            train_uuid=uuid.uuid1().hex
+            newTraining=cl_trainSection(dix,train_uuid)
+            f=forecast(m,train_uuid)
             train_uuid=newTraining.train()
             
         if commons.date_index_external[dix].year!=runningyear:

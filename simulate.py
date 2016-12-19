@@ -23,7 +23,7 @@ def play_for_a_day(idx_external,dix,alpha,gamma,sim_uuid,train_uuid):
 
     for ticker in commons.getHistSp500Composition(commons.date_index_external[dix])[index_t]:
         reward[ticker]=9999
-        if f.trained(dba,train_uuid,ticker):
+        if f.trained(train_uuid,ticker):
             try:
                 state[ticker]=new_state[ticker]
             except KeyError:
@@ -64,7 +64,7 @@ def play_for_a_day(idx_external,dix,alpha,gamma,sim_uuid,train_uuid):
                 dba.log_recommendation(sim_uuid,dix,ticker,commons.action_code['buy']) 
 
         else: #for the tickers that are not trained yet align with the index
-            action=f.getActionUntrained(p,index_t,ticker,dix,)
+            action=f.getActionUntrained(p,index_t,ticker,dix)
             if action[0]==commons.action_code['buy']:
                 order_untrained[ticker]=m.get_opening_price(ticker,next_dix)
             elif action[0]==commons.action_code['sell']:
@@ -146,11 +146,12 @@ for simrun in range(1,10):
 
     runningyear=0
     for dix in range(11624,commons.date_index_internal[commons.max_date['WIKI_SP500']]):
-        if (dix-4)%10==0:
-            print 'Retraining the models. Date:',commons.date_index_external[dix]
+        if (dix-4)%20==0:
             start=time.time()
             train_uuid=uuid.uuid1().hex
             #train_uuid='0cb4a5aec5a111e68f65c82a142bddcf'
+            print 'Retraining the models. Date:',commons.date_index_external[dix],'training guid:',train_uuid
+
             newTraining=cl_trainSection(dix,train_uuid)
             f=forecast(m,train_uuid)
             newTraining.train()

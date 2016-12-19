@@ -1,6 +1,7 @@
 import commons
 import pandas as pd
 from sklearn.externals import joblib
+import tables
 
 class forecast(object):
     trading_strategy='aggressiv'
@@ -11,13 +12,16 @@ class forecast(object):
         self.m=market
         self.train_uuid=train_uuid
         
-    def trained(self,dba,train_uuid,ticker):
+    def trained(self,train_uuid,ticker):
+        dba=tables.open_file(commons.stats_path+'simulation.h5', 'r+')
+        t_stats=dba.get_node('/','stats')
         found=False
-        stats=dba.t_stats.read_where('(ticker=='+"'"+str(ticker)+"'"+")"+' & (kpi=='+"'"+'1dd_Close'+"')")
+        stats=t_stats.read_where('(ticker=='+"'"+str(ticker)+"'"+")"+' & (kpi=='+"'"+'1dd_Close'+"')")
         for row in stats:
             if str(self.train_uuid)==row['train_uuid']:
                 found=True
                 break
+        dba.close()
         return found
         
     def getActionUntrained(self,p,sector,ticker,dix):
@@ -123,10 +127,10 @@ class forecast(object):
                     pca=row['pca']
 
 
-        models=t_stats.read_where('(train_uuid=='+"'"+self.train_uuid+"')"+' & (ticker=='+"'"+sp500_ticker[ticker]+"')"+' & (kpi=='+"'"+str(label)+"')")
+        models=t_stats.read_where('(ticker=='+"'"+sp500_ticker[ticker]+"')"+' & (kpi=='+"'"+str(label)+"')")
         general_accuracy=0
         for row in models:
-            if row['accuracy']>general_accuracy:
+            if row['accuracy']>general_accuracy and str(self.train_uuid)==row['train_uuid']:
                 general_accuracy=row['accuracy']
                 generic_model=str(row['pca'])+'generic_'+row['model']+'_'+sp500_ticker[ticker]+label
                 generic_pca=row['pca']

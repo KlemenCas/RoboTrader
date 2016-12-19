@@ -167,7 +167,7 @@ class cl_trainSection(object):
         modes.remove(mode) 
         
         l_i=505     
-        for x_pca in range(8,11):
+        for x_pca in range(8,9):
             if x_pca==8:
                 l_pca=0
             else:

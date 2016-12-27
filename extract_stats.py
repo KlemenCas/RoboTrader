@@ -5,15 +5,15 @@ import pandas as pd
 
 dbases=dict()
 dbases['simulation'] = tables.open_file(commons.stats_path+'simulation.h5', 'r')
-dbases['t_log']=tables.open_file(commons.stats_path+'t_log.h5', 'r')
-dbases['performance_log']=tables.open_file(commons.stats_path+'performance_log.h5', 'r')
+#dbases['t_log']=tables.open_file(commons.stats_path+'t_log.h5', 'r')
+#dbases['performance_log']=tables.open_file(commons.stats_path+'performance_log.h5', 'r')
 
 for k, db in dbases.items():
     for x in db.walk_nodes():
         if x.__class__==tables.table.Table:
             tbl=dict()
             tbl[x.name]=db.get_node('/',x.name)
-            with open(commons.local_path+'analytics/'+x.name+'.csv','w') as csvfile:
+            with open(commons.analytics_path+x.name+'.csv','w') as csvfile:
                 csvwriter = csv.writer(csvfile, delimiter=',')
                 csvwriter.writerow(tbl[x.name].colnames)
                 for row in tbl[x.name]:
@@ -28,7 +28,7 @@ for k, db in dbases.items():
     
     db.close()
 
-with open(commons.local_path+'analytics/dix.csv','w') as csvfile:
+with open(commons.analytics_path+'dix.csv','w') as csvfile:
     csvwriter = csv.writer(csvfile, delimiter=',')
     for k,d in commons.date_index_external.items():
         xrow=list()         
@@ -37,7 +37,7 @@ with open(commons.local_path+'analytics/dix.csv','w') as csvfile:
         csvwriter.writerow(xrow)
 csvfile.close()
 
-with open(commons.local_path+'analytics/action.csv','w') as csvfile:
+with open(commons.analytics_path+'action.csv','w') as csvfile:
     csvwriter = csv.writer(csvfile, delimiter=',')
     for k,d in commons.action_code.items():
         xrow=list()         
@@ -83,7 +83,7 @@ t_sim_h=dbases['simulation'].get_node('/','sim_h')
 #            
 #
 #    
-#    with open(commons.local_path+'analytics/index.csv','w') as csvfile:
+#    with open(commons.analytics_path+'index.csv','w') as csvfile:
 #        csvwriter = csv.writer(csvfile, delimiter=',')
 #        xrow=list(['SimUUID','Date','Symbol','Volume'])
 #        csvwriter.writerow(xrow)
@@ -100,7 +100,7 @@ t_sim_h=dbases['simulation'].get_node('/','sim_h')
 #                csvwriter.writerow(xrow)
 #    csvfile.close()    
 #
-#    with open(commons.local_path+'analytics/portfolio.csv','w') as csvfile:
+#    with open(commons.analytics_path+'portfolio.csv','w') as csvfile:
 #        csvwriter = csv.writer(csvfile, delimiter=',')
 #        xrow=list(['SimUUID','Date','Symbol','Volume'])
 #        csvwriter.writerow(xrow)
@@ -119,7 +119,7 @@ t_sim_h=dbases['simulation'].get_node('/','sim_h')
     
 #extract prices
 df=pd.read_hdf(commons.data_path+'WIKI_SP500.h5','table')
-with open(commons.local_path+'analytics/prices.csv','w') as csvfile:
+with open(commons.analytics_path+'prices.csv','w') as csvfile:
     csvwriter = csv.writer(csvfile, delimiter=',')
     xrow=list(['Symbol','Date','Type','Price'])
     csvwriter.writerow(xrow)

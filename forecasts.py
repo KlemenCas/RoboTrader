@@ -11,33 +11,33 @@ class forecast(object):
     def __init__(self,market,train_uuid):  
         self.m=market
         self.train_uuid=train_uuid
+        self.dba=tables.open_file(commons.stats_path+'simulation.h5', 'r+')
+        self.t_stats=self.dba.get_node('/','stats')
+        self.t_clusters=self.dba.get_node('/','cluster_table')
         
     def trained(self,train_uuid,ticker):
-        dba=tables.open_file(commons.stats_path+'simulation.h5', 'r+')
-        t_stats=dba.get_node('/','stats')
         found=False
-        stats=t_stats.read_where('(ticker=='+"'"+str(ticker)+"'"+")"+' & (kpi=='+"'"+'1dd_Close'+"')")
+        stats=self.t_stats.read_where('(ticker=='+"'"+str(ticker)+"'"+")"+' & (kpi=='+"'"+'1dd_Close'+"')")
         for row in stats:
             if str(self.train_uuid)==row['train_uuid']:
                 found=True
                 break
-        dba.close()
         return found
         
     def getActionUntrained(self,p,sector,ticker,dix):
-        pct=commons.read_dataframe(commons.data_path+'PCT_'+sector+'h5')
+        pct=commons.read_dataframe(commons.data_path+'PCT_'+sector+'.h5')
         try:
             actualVol=p.portfolio[ticker]
         except KeyError:
             actualVol=0
-        targetVol=int((p.get_portfolio_value(sector,dix)+p.cash[sector])*pct.ix[commons.date_index_external[dix],'ticker']/self.m.get_closing_price(ticker,dix))
+        targetVol=int((p.get_portfolio_value(sector,dix)+p.cash[sector])*pct.ix[commons.date_index_external[dix],ticker]/self.m.get_closing_price(ticker,dix))
         if actualVol>=targetVol:
             return commons.action_code['sell'],(actualVol-targetVol)
         else:
             return commons.action_code['buy'],(targetVol-actualVol)
 
-    def get_order_price(self,dba,ticker,state,dix,action,closing_price):
-        clusters=dba.t_clusters.read_where('(ticker=='+"'"+str(ticker)+"'"+")"+' & (kpi=='+"'"+'_clr'+"')")
+    def get_order_price(self,ticker,state,dix,action,closing_price):
+        clusters=self.t_clusters.read_where('(ticker=='+"'"+str(ticker)+"'"+")"+' & (kpi=='+"'"+'_clr'+"')")
         pct_change=0
         if self.trading_strategy=='aggressiv':
             if action==commons.action_code['buy']:
@@ -50,7 +50,7 @@ class forecast(object):
                             else:
                                 pct_change=row['c'+str(i)]
             if action==commons.action_code['sell']:                                           
-                clusters=dba.t_clusters.read_where('(train_uuid=='+"'"+self.train_uuid+"')"+' & (ticker=='+"'"+str(ticker)+"'"+")"+' & (kpi=='+"'"+'_chr'+"')")
+                clusters=self.t_clusters.read_where('(train_uuid=='+"'"+self.train_uuid+"')"+' & (ticker=='+"'"+str(ticker)+"'"+")"+' & (kpi=='+"'"+'_chr'+"')")
                 for row in clusters:
                     for i in range(0,5):
                         x=state['clr_cluster_'+str(i)]+2
@@ -76,7 +76,7 @@ class forecast(object):
         return expected_price
         
 #based on date's feature values predicts the value of label y        
-    def get_forecast_state(self,t_stats,ticker,dix):
+    def get_forecast_state(self,ticker,dix):
 #        print 'Forecasting for: ',ticker,commons.date_index_external[dix]
         Xy_all=pd.read_hdf(commons.data_path+'Xy_all_'+str(ticker),'table')
         select_columns=commons.Xy_columns(Xy_all,'Close')
@@ -86,7 +86,7 @@ class forecast(object):
         del Xy_all
         state=dict()
         for y in commons.y_labels:
-            model=self.get_best_model(t_stats,ticker,y,dix)
+            model=self.get_best_model(ticker,y,dix)
 #            print model[3]
             if len(model[0])!=0 or len(model[1])!=0 or len(model[2])!=0:
                 model_key=model[0]
@@ -112,11 +112,11 @@ class forecast(object):
         return state      
         
        
-    def get_best_model(self,t_stats,ticker,label,dix):
+    def get_best_model(self,ticker,label,dix):
         sp500_ticker=commons.getHistSp500Ticker(commons.date_index_external[dix])
         model1,model2,generic_model='','',''
         pca,generic_pca=0,0
-        models=t_stats.read_where('(ticker=='+"'"+str(ticker)+"')"+' & (kpi=='+"'"+str(label)+"')")
+        models=self.t_stats.read_where('(ticker=='+"'"+str(ticker)+"')"+' & (kpi=='+"'"+str(label)+"')")
         ticker_accuracy=0
         for row in models:
             if str(self.train_uuid)==row['train_uuid']:
@@ -127,7 +127,7 @@ class forecast(object):
                     pca=row['pca']
 
 
-        models=t_stats.read_where('(ticker=='+"'"+sp500_ticker[ticker]+"')"+' & (kpi=='+"'"+str(label)+"')")
+        models=self.t_stats.read_where('(ticker=='+"'"+sp500_ticker[ticker]+"')"+' & (kpi=='+"'"+str(label)+"')")
         general_accuracy=0
         for row in models:
             if row['accuracy']>general_accuracy and str(self.train_uuid)==row['train_uuid']:

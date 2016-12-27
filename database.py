@@ -226,21 +226,29 @@ class db(object):
         else:
             return 50.
             
-    def get_softmax_action(self,ticker,state,t):
-        actions=[commons.action_code['sell'],commons.action_code['buy']]
-#commons.action_code['hold'],
-        distr=np.array([])
-        e_q_sum=0        
-        for b in actions:
-            e_q_sum+=exp(self.get_reward(ticker,state,b)/t)
-        for a in actions:
-            e_q=0.
-            e_q=exp(self.get_reward(ticker,state,a)/t)
-            distr_a=np.array([])
-            for i in range(int(e_q/e_q_sum*100)):
-                distr_a=np.append(distr_a,a)
-            distr=np.append(distr,distr_a)
-        return distr[int(distr[int(random.random()*len(distr))])]
+    def get_softmax_action(self,ticker,state,t,scenario):
+        if scenario=='q_learning':
+            actions=[commons.action_code['sell'],commons.action_code['buy']]
+            distr=np.array([])
+            e_q_sum=0        
+            for b in actions:
+                e_q_sum+=exp(self.get_reward(ticker,state,b)/t)
+            for a in actions:
+                e_q=0.
+                e_q=exp(self.get_reward(ticker,state,a)/t)
+                distr_a=np.array([])
+                for i in range(int(e_q/e_q_sum*100)):
+                    distr_a=np.append(distr_a,a)
+                distr=np.append(distr,distr_a)
+            return distr[int(distr[int(random.random()*len(distr))])]
+        elif scenario=='best':
+            q_key=str(self.get_q_key(state))
+            if q_key[-2:-1]=='3':
+                return commons.action_code['buy']
+            elif q_key[-2:-1]=='2':
+                return commons.action_code['hold']
+            elif q_key[-2:-1]=='1':
+                return commons.action_code['sell']
 
     def get_q_key(self,state):
         q_key=1

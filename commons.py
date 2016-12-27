@@ -70,17 +70,19 @@ def getWIKITicker(ticker):
         return ticker    
 
 def setPath():
-    global data_path,local_path,stats_path,model_path,backup_path
+    global data_path,local_path,stats_path,model_path,backup_path,analytics_path
     if platform.node()=='DESKTOP-5HHG5ET':
         backup_path='C:/Users/kleme/OneDrive/HF_Trading/RoboTrader/backup/'
         data_path  ='C:/Users/kleme/OneDrive/HF_Trading/RoboTrader/data/'
         model_path ='C:/Users/kleme/OneDrive/HF_Trading/RoboTrader/model/'
         stats_path ='C:/Users/kleme/OneDrive/HF_Trading/RoboTrader/stats/'
+        analytics_path ='C:/Users/kleme/OneDrive/HF_Trading/RoboTrader/analytics/'
     elif 'Klemens' in platform.node():
         backup_path='/Users/kncas/OneDrive/HF_Trading/RoboTrader/backup/'
         data_path  ='/Users/kncas/OneDrive/HF_Trading/RoboTrader/data/'
         model_path ='/Users/kncas/OneDrive/HF_Trading/RoboTrader/model/'
-        stats_path ='/Users/kncas/OneDrive/HF_Trading/RoboTrader/stats/'        
+        stats_path ='/Users/kncas/OneDrive/HF_Trading/RoboTrader/stats/'    
+        analytics_path='/Users/kncas/OneDrive/HF_Trading/RoboTrader/analytics/'
     local_path='./'
     
 #read datafrom from disc

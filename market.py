@@ -12,7 +12,7 @@ class stock_market(object):
     startdates=dict()
     transaction_price=0
 
-    def __init__(self,dba,initial_budget,earliest=False):
+    def __init__(self,dba,initial_budget,firstDate,earliest=False):
         self.dba=dba
         self.transaction_price=10
         self.initialize_index()
@@ -24,7 +24,7 @@ class stock_market(object):
             if earliest:
                 startdate[v[-8:]]=min(self.index_composition[v[-8:]].index)
             else:
-                startdate[v[-8:]]=commons.max_date['WIKI_SP500']-dt.timedelta(days=180)
+                startdate[v[-8:]]=commons.date_index_external[firstDate]
                 
         for k,v in commons.getIndexCodes().items():
             index_t=v[-8:]

@@ -31,9 +31,9 @@ for simrun in range(1,maxsim+1):
                 first=''
                 p_base=row['p_value']+row['cash']
                 i_base=row['i_value']*1.
-            print 'simulation:',simrun
             df.ix[commons.date_index_external[row['dix']],['Index']]=(row['i_value'])/i_base
             df.ix[commons.date_index_external[row['dix']],['P_Total']]=(row['p_value']+row['cash'])/p_base
 
+    print 'simulation:',simrun
     df.plot(kind='line',fontsize=20)
     plt.show()

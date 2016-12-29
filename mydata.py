@@ -14,6 +14,7 @@ class mydata(object):
     refresh_data=True
     demo_scenario=True
     sp500_change=dict()
+    df12dd=pd.DataFrame()
     df1dr=pd.DataFrame()
     df5dr=pd.DataFrame()
     df20dr=pd.DataFrame()
@@ -287,8 +288,10 @@ class mydata(object):
         self.df20dr=(self.dfPrices.shift(-20)/self.dfPrices-1).round(2)*100
         #directional labels
         self.df1dd=(self.dfPrices.shift(-1)/self.dfPrices-1)*100
+        self.df12dd=(self.dfPrices.shift(-2)/self.dfPrices.shift(-1)-1)*100
         self.df5dd=(self.dfPrices.shift(-5)/self.dfPrices-1)*100
         self.df20dd=(self.dfPrices.shift(-20)/self.dfPrices-1)*100
+        
         #close to low and close to high
         for k,v in commons.sp500SectorAssignmentsTicker.items():        
             #close to low and close to high
@@ -326,7 +329,7 @@ class mydata(object):
                 
         
         #fill, minmax and direction
-        a=list(['1dm','2dm','5dm','30dsma','30dmx','30dmn','5dv','bbands','1dd','5dd','20dd','clr','chr','ny_ss','ns_ss','1er','2er','5er'])
+        a=list(['1dm','2dm','5dm','30dsma','30dmx','30dmn','5dv','bbands','1dd','12dd','5dd','20dd','clr','chr','ny_ss','ns_ss','1er','2er','5er'])
         for x in a:
             setattr(self,'df'+str(x),getattr(self,'df'+str(x)).fillna(method='backfill'))
             setattr(self,'df'+str(x),getattr(self,'df'+str(x)).fillna(method='ffill'))
@@ -340,7 +343,7 @@ class mydata(object):
                 getattr(self,'df'+str(x)).to_hdf(commons.data_path+'df'+str(x)+'.h5','table',mode='w')
                 
 
-        a=list(['1dd','5dd','20dd'])
+        a=list(['1dd','5dd','20dd','12dd'])
         for x in a: 
             setattr(self,'df'+str(x),self.p_direction(getattr(self,'df'+str(x))))
             setattr(self,'df'+str(x),self.n_direction(getattr(self,'df'+str(x))))
@@ -548,7 +551,7 @@ class mydata(object):
             df=df.join(df1,how='outer')                 
 
         select_columns=list([str(ticker)+'_Open',str(ticker)+'_Low',str(ticker)+'_High',str(ticker)+'_Close'])
-        a=list(['1dr','5dr','20dr','1dd','5dd','20dd'])
+        a=list(['1dr','5dr','20dr','1dd','5dd','20dd','12dd'])
         for x in a:
             target_columns=list([str(x)+'_Open',str(x)+'_Low',str(x)+'_High',str(x)+'_Close'])
             np1=getattr(self,'df'+str(x)).ix[self.df1st_date[ticker]:,select_columns].values

@@ -81,7 +81,7 @@ class forecast(object):
         Xy_all=pd.read_hdf(commons.data_path+'Xy_all_'+str(ticker),'table')
         select_columns=commons.Xy_columns(Xy_all,'Close')
         Xy=Xy_all.ix[commons.date_index_external[dix],select_columns]
-        X=Xy[:-8]
+        X=Xy[:-9]
         X_t=X
         del Xy_all
         state=dict()

@@ -76,12 +76,14 @@ def setPath():
         data_path  ='C:/Users/kleme/OneDrive/HF_Trading/RoboTrader/data/'
         model_path ='C:/Users/kleme/OneDrive/HF_Trading/RoboTrader/model/'
         stats_path ='C:/Users/kleme/OneDrive/HF_Trading/RoboTrader/stats/'
+        daily_path ='C:/Users/kleme/OneDrive/HF_Trading/RoboTrader/daily/'
         analytics_path ='C:/Users/kleme/OneDrive/HF_Trading/RoboTrader/analytics/'
     elif 'Klemens' in platform.node():
         backup_path='/Users/kncas/OneDrive/HF_Trading/RoboTrader/backup/'
         data_path  ='/Users/kncas/OneDrive/HF_Trading/RoboTrader/data/'
         model_path ='/Users/kncas/OneDrive/HF_Trading/RoboTrader/model/'
-        stats_path ='/Users/kncas/OneDrive/HF_Trading/RoboTrader/stats/'    
+        stats_path ='/Users/kncas/OneDrive/HF_Trading/RoboTrader/stats/'
+        daily_path ='/Users/kncas/OneDrive/HF_Trading/RoboTrader/daily/'
         analytics_path='/Users/kncas/OneDrive/HF_Trading/RoboTrader/analytics/'
     local_path='./'
     
@@ -118,9 +120,9 @@ def initCodes():
     alternative_symbol['BRKB']='BRK_B'
 
     #y labels
-    y_labels=list(['1dd_Close','5dd_Close','20dd_Close','clr_cluster_0','clr_cluster_1','clr_cluster_2','clr_cluster_3',\
+    y_labels=list(['1dd_Close','5dd_Close','20dd_Close','12dd_Close','clr_cluster_0','clr_cluster_1','clr_cluster_2','clr_cluster_3',\
                    'clr_cluster_4','chr_cluster_0','chr_cluster_1','chr_cluster_2','chr_cluster_3','chr_cluster_4'])
-    y_dd_labels=list(['1dd_Close','5dd_Close','20dd_Close'])
+    y_dd_labels=list(['1dd_Close','5dd_Close','20dd_Close','12dd_Close'])
     y_chr_clr_labels=list(['clr_cluster_0','clr_cluster_1','clr_cluster_2','clr_cluster_3',\
                            'clr_cluster_4','chr_cluster_0','chr_cluster_1','chr_cluster_2','chr_cluster_3','chr_cluster_4'])
 
@@ -148,6 +150,7 @@ def initCodes():
     qkc['chr_cluster_2']=11
     qkc['chr_cluster_3']=12
     qkc['chr_cluster_4']=13
+    qkc['12dd_Close']=14
        
 def loadSp500Composition():
     global currentSp500Constituents,demo_scenario
@@ -369,6 +372,16 @@ def getIndexCodes():
     else:
         retDict=sp500_index
     return retDict
+
+def getNextTradeDay(date):
+    weekday=date.weekday()
+    if weekday==5:
+        return date+dt.timedelta(days=2)
+    elif weekday==4:
+        return date+dt.timedelta(days=3)
+    else:
+        return date+dt.timedelta(days=1)
+
 
 sp500CompDates=dict()    
 date_index_internal=dict()

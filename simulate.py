@@ -56,7 +56,7 @@ def play_for_a_day(idx_external,dix,alpha,gamma,sim_uuid,train_uuid,scenario):
 
                     if opening_price>(forecast_price*.997):
                         forecast_price=opening_price*.997
-                    reward[ticker]=p.execute_order(ticker,vol,next_dix,forecast_price,proposed_action[ticker],m.get_closing_price(ticker,dix))
+                    reward[ticker]=p.execute_order(ticker,vol,next_dix,forecast_price,proposed_action[ticker],m.get_closing_price(ticker,dix),state[ticker]['12dd_Close'])
                     dba.log_recommendation(sim_uuid,dix,ticker,commons.action_code['sell'],vol)    
 
                 except KeyError:
@@ -76,18 +76,18 @@ def play_for_a_day(idx_external,dix,alpha,gamma,sim_uuid,train_uuid,scenario):
             if action[ticker][0]==commons.action_code['buy']:
                 order_untrained[ticker]=m.get_opening_price(ticker,next_dix)
             elif action[ticker][0]==commons.action_code['sell']:
-                x=p.execute_order(ticker,action[1],next_dix,m.get_opening_price(ticker,next_dix),commons.action_code['sell'],m.get_closing_price(ticker,dix))     
+                x=p.execute_order(ticker,action[1],next_dix,m.get_opening_price(ticker,next_dix),commons.action_code['sell'],m.get_closing_price(ticker,dix),state[ticker]['12dd_Close'])     
             
     #allocate money for the randoms
     for ticker,opening_price in order_random.items():
         forecast_price=f.get_order_price(ticker,state[ticker],dix,commons.action_code['buy'],m.get_closing_price(ticker,dix))
         if order_random[ticker]*1.01<forecast_price:
             forecast_price=order_random[ticker]*1.01
-        reward[ticker]=p.execute_order(ticker,1,next_dix,forecast_price,commons.action_code['buy'],m.get_closing_price(ticker,dix))
+        reward[ticker]=p.execute_order(ticker,1,next_dix,forecast_price,commons.action_code['buy'],m.get_closing_price(ticker,dix),state[ticker]['12dd_Close'])
 
     #allocate for alignment
     for ticker,opening_price in order_untrained.items():
-        x=p.execute_order(ticker,action[ticker][1],next_dix,m.get_opening_price(ticker,next_dix),commons.action_code['buy'],m.get_closing_price(ticker,dix))
+        x=p.execute_order(ticker,action[ticker][1],next_dix,m.get_opening_price(ticker,next_dix),commons.action_code['buy'],m.get_closing_price(ticker,dix),state[ticker]['12dd_Close'])
 
     budget=dict()
     for k,v in commons.getIndexCodes().items():
@@ -104,7 +104,7 @@ def play_for_a_day(idx_external,dix,alpha,gamma,sim_uuid,train_uuid,scenario):
             forecast_price=f.get_order_price(ticker,state[ticker],dix,commons.action_code['sell'],m.get_closing_price(ticker,dix))
             if order_entry[ticker]>(forecast_price*.997):
                 forecast_price=order_entry[ticker]*.997
-            a=p.execute_order(ticker,0-volume,next_dix,forecast_price,commons.action_code['sell'],m.get_closing_price(ticker,dix))
+            a=p.execute_order(ticker,0-volume,next_dix,forecast_price,commons.action_code['sell'],m.get_closing_price(ticker,dix),state[ticker]['12dd_Close'])
             
     for ticker,volume in orderBook.items():
         if volume>0:
@@ -112,7 +112,7 @@ def play_for_a_day(idx_external,dix,alpha,gamma,sim_uuid,train_uuid,scenario):
                 forecast_price=f.get_order_price(ticker,state[ticker],dix,commons.action_code['buy'],m.get_closing_price(ticker,dix))
                 if order_entry[ticker]<forecast_price:
                     forecast_price=order_entry[ticker]
-                reward[ticker]=p.execute_order(ticker,volume,next_dix,forecast_price,commons.action_code['buy'],m.get_closing_price(ticker,dix))
+                reward[ticker]=p.execute_order(ticker,volume,next_dix,forecast_price,commons.action_code['buy'],m.get_closing_price(ticker,dix),state[ticker]['12dd_Close'])
                 dba.log_recommendation(sim_uuid,dix,ticker,commons.action_code['buy'],volume)
             
 #on the way to the next q

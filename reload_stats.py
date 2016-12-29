@@ -138,7 +138,8 @@ class db(object):
                         'volume':tables.IntCol(),
                         'close':tables.FloatCol(),
                         'cash_before':tables.FloatCol(),
-                        'cash_after':tables.FloatCol()}
+                        'cash_after':tables.FloatCol(),
+                        '12dd':tables.IntCol()}
             self.t_log=self.db_main.create_table('/','t_log',t_log_desc)
             self.t_log.cols.sim_uuid.create_index()
             self.t_log.cols.ticker.create_index()

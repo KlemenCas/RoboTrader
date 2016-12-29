@@ -112,7 +112,7 @@ class cl_trainSection(object):
             Xy_all2=Xy_all.ix[date[0]:date[1],select_columns]
             Xy_all1=pd.concat([Xy_all1,Xy_all2])
         Xy_all=Xy_all1
-        X_all=Xy_all.ix[:,:-8]
+        X_all=Xy_all.ix[:,:-9]
 
         #reduce dimension space?
         if len(X_all.index)>250:
@@ -124,7 +124,7 @@ class cl_trainSection(object):
                 del pca
 
         #get labels and drop the % forecast, as not relevant for the investment decision
-        y_all=Xy_all.ix[:,-8:]
+        y_all=Xy_all.ix[:,-9:]
         y_all=y_all.drop(['1dr_Close', '5dr_Close', '20dr_Close'],1)
         
         return X_all,y_all

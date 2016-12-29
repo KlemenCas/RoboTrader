@@ -12,7 +12,7 @@ class stock_market(object):
     startdates=dict()
     transaction_price=0
 
-    def __init__(self,dba,initial_budget,firstDate,earliest=False):
+    def __init__(self,dba,initial_budget,firstDate,earliest=False,portfolioValue=dict()):
         self.dba=dba
         self.transaction_price=10
         self.initialize_index()
@@ -34,7 +34,10 @@ class stock_market(object):
             if startdate[index_t] not in self.index_composition[index_t].index:
                 while startdate[index_t] not in self.index_composition[index_t].index:
                     startdate[index_t]=startdate[index_t]+dt.timedelta(days=1)   
-            self.initialize_portfolio(k,commons.date_index_internal[startdate[index_t]],initial_budget)
+            if portfolioValue==dict():
+                self.initialize_portfolio(k,commons.date_index_internal[startdate[index_t]],initial_budget)
+            else:
+                self.initialize_portfolio(k,commons.date_index_internal[startdate[index_t]],portfolioValue[index_t])
 
             self.startdates[index_t]=startdate[index_t]
     

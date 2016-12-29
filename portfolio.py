@@ -11,12 +11,22 @@ class investments(object):
     portfolio_value=dict()
     portfolio_log=dict()
 
-    def __init__(self,initial_budget,market,init_dix,dba,sim_uuid): 
+    def __init__(self,initial_budget,market,init_dix,dba,sim_uuid,portfolio=dict(),cash=dict()): 
         self.dba=dba
         self.sim_uuid=sim_uuid
         self.market=market
-        self.initialize_cash(initial_budget)
-        self.initialize_portfolio(init_dix)     
+        if portfolio==dict():
+            self.initialize_cash(initial_budget)
+            self.initialize_portfolio(init_dix)   
+        else:
+            self.refreshPortfolio(portfolio)
+            self.refreshCash(cash)
+            
+    def refreshPortfolio(self,portfolio):
+        self.portfolio=portfolio
+        
+    def refreshCash(self,cash):
+        self.cash=cash
 
     def initialize_cash(self,initial_budget):
         for k,v in commons.getIndexCodes().items():
@@ -103,49 +113,57 @@ class investments(object):
                             found='X'
                     if found=='':
                         print 'Missing: ',ticker
-            
-#execute order
-    def execute_order(self,ticker,volume,dix,price,action,last_close):
-        try:
-            index_t=commons.getHistSp500Ticker(commons.date_index_external[dix])[ticker]
-        except KeyError:
-            index_t=commons.getHistSp500Ticker(commons.date_index_external[dix-1])[ticker]
-        cash_before=self.cash[index_t]
+
+    def logTransaction(self,simUuid,dix,ticker,price,volume,close,cashBefore,cashAfter,_12dd,tx):
         self.dba.t_log.row['sim_uuid']=self.sim_uuid
         self.dba.t_log.row['dix']=dix-1
         self.dba.t_log.row['ticker']=ticker
         self.dba.t_log.row['price']=price
         self.dba.t_log.row['volume']=volume
         self.dba.t_log.row['close']=self.market.get_closing_price(ticker,dix)
-        self.dba.t_log.row['cash_before']=cash_before     
-        self.dba.t_log.row['cash_after']=self.cash[index_t]
+        self.dba.t_log.row['cash_before']=cashBefore     
+        self.dba.t_log.row['cash_after']=cashAfter
+        self.dba.t_log.row['12dd']=_12dd
+        self.dba.t_log.row['tx']=tx
+        self.dba.t_log.row.append()
+        self.dba.t_log.flush()
+                                
+#execute order
+    def execute_order(self,ticker,volume,dix,price,action,last_close,_12dd,checkExecutable=True):
+        try:
+            index_t=commons.getHistSp500Ticker(commons.date_index_external[dix])[ticker]
+        except KeyError:
+            index_t=commons.getHistSp500Ticker(commons.date_index_external[dix-1])[ticker]
+        cash_before=self.cash[index_t]
         try:
             a=self.portfolio[index_t][ticker]
         except KeyError:
             self.portfolio[index_t][ticker]=0
 
-        if (self.market.order_executable(ticker,dix,price,action)):
+        if (self.market.order_executable(ticker,dix,price,action)) or not checkExecutable:
             if action==commons.action_code['buy']:
                 if self.cash[index_t]<(price*volume+self.market.transaction_price):
                     volume=int((self.cash[index_t]/(price*volume+self.market.transaction_price))*volume)
                 self.portfolio[index_t][ticker]+=volume
                 self.cash[index_t]-=price*volume-self.market.transaction_price
-                self.dba.t_log.row['tx']='buy'
-            
+                tx='buy'
             if action==commons.action_code['sell'] and self.portfolio[index_t][ticker]>0:
                 self.portfolio[index_t][ticker]-=volume
                 self.cash[index_t]+=price*volume-self.market.transaction_price
-                self.dba.t_log.row['tx']='sell'
-                
-            self.dba.t_log.row['cash_after']=self.cash[index_t]
+                tx='sell'
+
         else:
             if action==commons.action_code['buy']:
-                self.dba.t_log.row['tx']='canc_buy'
+                tx='canc_buy'
             elif action==commons.action_code['sell']:
-                self.dba.t_log.row['tx']='canc_sell'
-        self.dba.t_log.row.append()
-        self.dba.t_log.flush()
+                tx='canc_sell'
+            
+        self.logTransaction(self.sim_uuid,dix-1,ticker,price,volume,self.market.get_closing_price(ticker,dix),\
+                            cash_before,self.cash[index_t],_12dd,tx)
 
+        return self.getReward(ticker,dix,last_close)
+
+    def getReward(self,ticker,dix,last_close):
         if (self.market.get_closing_price(ticker,dix)-last_close)>0 and action==commons.action_code['buy']:
             reward=200
         if (self.market.get_closing_price(ticker,dix)-last_close)>0 and action==commons.action_code['sell']:
@@ -158,7 +176,6 @@ class investments(object):
             reward=-200
         if (self.market.get_closing_price(ticker,dix)-last_close)<0 and action==commons.action_code['sell']:
             reward=+200
-        
         return reward
         
     def get_portfolio_value(self,idx,dix):

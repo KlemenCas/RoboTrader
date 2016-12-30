@@ -285,11 +285,11 @@ class db(object):
         self.t_sim_h.flush()
         
     
-    def log_recommendation(self,sim_uuid,dix,ticker,action,volume=0):
+    def log_recommendation(self,sim_uuid,dix,ticker,action,price):
         self.t_recommend.row['sim_uuid']=sim_uuid
         self.t_recommend.row['dix']=dix
         self.t_recommend.row['ticker']=ticker
         self.t_recommend.row['action']=action
-        self.t_recommend.row['volume']=volume
+        self.t_recommend.row['price']=price
         self.t_recommend.row.append()
         self.t_recommend.flush()

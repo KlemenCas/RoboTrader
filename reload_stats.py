@@ -241,7 +241,7 @@ class db(object):
                                 'dix':tables.IntCol(),
                                 'ticker':tables.StringCol(10),
                                 'action':tables.StringCol(10),
-                                'volume':tables.IntCol()}
+                                'price':tables.FloatCol()}
                 self.t_recommend=self.db_main.create_table('/','recommend',recommend_desc)
                 self.t_recommend.cols.sim_uuid.create_index()
                 self.t_recommend.cols.dix.create_index()
@@ -258,7 +258,7 @@ class db(object):
                                 'dix':tables.IntCol(),
                                 'ticker':tables.StringCol(10),
                                 'action':tables.StringCol(10),
-                                'volume':tables.IntCol()}
+                                'price':tables.FloatCol()}
                 self.t_recommend=self.db_main.create_table('/','recommend',recommend_desc)
                 self.t_recommend.cols.sim_uuid.create_index()
                 self.t_recommend.cols.dix.create_index()

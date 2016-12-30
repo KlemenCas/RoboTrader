@@ -147,7 +147,7 @@ class investments(object):
                 self.portfolio[index_t][ticker]+=volume
                 self.cash[index_t]-=price*volume-self.market.transaction_price
                 tx='buy'
-            if action==commons.action_code['sell'] and self.portfolio[index_t][ticker]>0:
+            if action==commons.action_code['sell']:
                 self.portfolio[index_t][ticker]-=volume
                 self.cash[index_t]+=price*volume-self.market.transaction_price
                 tx='sell'
@@ -161,9 +161,9 @@ class investments(object):
         self.logTransaction(self.sim_uuid,dix-1,ticker,price,volume,self.market.get_closing_price(ticker,dix),\
                             cash_before,self.cash[index_t],_12dd,tx)
 
-        return self.getReward(ticker,dix,last_close)
+        return self.getReward(ticker,dix,last_close,action)
 
-    def getReward(self,ticker,dix,last_close):
+    def getReward(self,ticker,dix,last_close,action):
         if (self.market.get_closing_price(ticker,dix)-last_close)>0 and action==commons.action_code['buy']:
             reward=200
         if (self.market.get_closing_price(ticker,dix)-last_close)>0 and action==commons.action_code['sell']:

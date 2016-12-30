@@ -230,22 +230,14 @@ class mydata(object):
         self.dfLastCalloff=self.dfLastCalloff.sort_index()
         self.dfanb=self.dfanb.sort_index()
 
+        self.dfWikiSp500=self.fillUpIndex(self.dfWikiSp500)
+        self.dfFundamentals=self.fillUpIndex(self.dfFundamentals)
+        self.dfShortSell=self.fillUpIndex(self.dfShortSell)
+        self.dfSentiment=self.fillUpIndex(self.dfSentiment)
+        self.dfSector=self.fillUpIndex(self.dfSector)
+        self.dfLastCalloff=self.fillUpIndex(self.dfLastCalloff)   
+        self.dfanb=self.fillUpIndex(self.dfanb)
         
-        self.dfWikiSp500=self.dfWikiSp500.fillna(method='backfill')
-        self.dfFundamentals=self.dfFundamentals.fillna(method='backfill')
-        self.dfShortSell=self.dfShortSell.fillna(method='backfill')
-        self.dfSentiment=self.dfSentiment.fillna(method='backfill')
-        self.dfSector=self.dfSector.fillna(method='backfill')
-        self.dfLastCalloff=self.dfLastCalloff.fillna(method='backfill')   
-        self.dfanb=self.dfanb.fillna(method='backfill')
-        
-        self.dfWikiSp500=self.dfWikiSp500.fillna(method='ffill')
-        self.dfFundamentals=self.dfFundamentals.fillna(method='ffill')
-        self.dfShortSell=self.dfShortSell.fillna(method='ffill')
-        self.dfSentiment=self.dfSentiment.fillna(method='ffill')
-        self.dfSector=self.dfSector.fillna(method='ffill')
-        self.dfLastCalloff=self.dfLastCalloff.fillna(method='ffill')   
-        self.dfanb=self.dfanb.fillna(method='ffill')
         print 'FillNa on source data performed.'
         
 
@@ -331,8 +323,7 @@ class mydata(object):
         #fill, minmax and direction
         a=list(['1dm','2dm','5dm','30dsma','30dmx','30dmn','5dv','bbands','1dd','12dd','5dd','20dd','clr','chr','ny_ss','ns_ss','1er','2er','5er'])
         for x in a:
-            setattr(self,'df'+str(x),getattr(self,'df'+str(x)).fillna(method='backfill'))
-            setattr(self,'df'+str(x),getattr(self,'df'+str(x)).fillna(method='ffill'))
+            setattr(self,'df'+str(x),self.fillUpIndex(getattr(self,'df'+str(x))))
             
         a=list(['1dm','2dm','5dm','30dsma','30dmx','30dmn','5dv','bbands'])
         for x in a:
@@ -351,8 +342,6 @@ class mydata(object):
         l_i=505
         for k,v in commons.sp500SectorAssignmentsTicker.items():     
             Xy_all=self.assemble_xy(k)
-            Xy_all=Xy_all.fillna(method='backfill')
-            Xy_all=Xy_all.fillna(method='ffill')            
             Xy_all.to_hdf(commons.data_path+'Xy_all_'+str(k),'table',mode='w')
             l_i-=1
             print 'Xy_all to '+str(k)+' assembled. '+str(l_i)+' to go.'
@@ -523,8 +512,8 @@ class mydata(object):
             df1=df1/self.calcFundamentals(ticker,x)-1
             np1=np.nan_to_num(df1.values)
             df1=pd.DataFrame(data=np1,index=id1,columns=target_columns)            
-            df=df.fillna(method='backfill')
             df=df.fillna(method='ffill')
+            df=df.fillna(method='backfill')
             df=df.fillna(value=0)  
             df1=pd.DataFrame(data=min_max_scaler.fit_transform(df1).round(2),index=df1.index,columns=df1.columns)
             df=df.join(df1,how='outer')
@@ -571,8 +560,7 @@ class mydata(object):
             df1=pd.DataFrame(data=np1,index=id1,columns=target_columns)
             df=df.join(df1,how='outer')            
         
-        df=df.fillna(method='backfill')
-        df=df.fillna(method='ffill')
+        df=self.fillUpIndex(df)
         df=df.fillna(value=0)        
 
         return df
@@ -672,7 +660,7 @@ class mydata(object):
         return df
 
 
-    def processResults(self,df,target,filename,first='backfill'):
+    def processResults(self,df,target,filename,first='ffill'):
         for c in df.columns:
             if 'Not Found' in c:
                 print 'Fundamentals to:',c
@@ -683,6 +671,11 @@ class mydata(object):
                 else:
                     target=target.join(getattr(df,c),how='outer')
  
+        target=self.fillUpIndex(target,first)
+        target.to_hdf(commons.data_path+filename+'.h5','table',mode='w')
+        return target        
+
+    def fillUpIndex(self,target,first='ffill'):
         dfIndex=list()
         for dix in range(commons.date_index_internal[commons.min_date],commons.date_index_internal[commons.max_date['WIKI_SP500']]):
            dfIndex.append(commons.date_index_external[dix]) 
@@ -695,9 +688,8 @@ class mydata(object):
         else:
             target=target.fillna(method='backfill')
             target=target.fillna(method='ffill')    
-        target.to_hdf(commons.data_path+filename+'.h5','table',mode='w')
-        return target        
-
+        return target
+        
         
     def checkDemoData(self,frame):
         columns=list()

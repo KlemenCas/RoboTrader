@@ -400,7 +400,7 @@ def initSp500Matrix(writeFile=True):
     if (writeFile):
         df1=pd.DataFrame([])   
         idx=list()
-        for i in range(date_index_internal[commons.min_date],date_index_internal[max(data_sp500.index)]):
+        for i in range(date_index_internal[commons.min_date],date_index_internal[max(data_sp500.index)]+1):
             idx.append(date_index_external[i])
         
         dfSector=dict()
@@ -409,7 +409,7 @@ def initSp500Matrix(writeFile=True):
             tickerSeries=dict()
             for date in dates:
                 ts1=np.zeros(date_index_internal[date['startdate']]-date_index_internal[commons.min_date])
-                ts2=np.ones(date_index_internal[date['enddate']]-date_index_internal[date['startdate']])
+                ts2=np.ones(date_index_internal[date['enddate']]-date_index_internal[date['startdate']]+1)
                 ts3=np.zeros(date_index_internal[max(data_sp500.index)]-date_index_internal[date['enddate']])
                 if len(ts1)>0:
                     tickerSeries[i]=np.append(ts1,ts2)
@@ -420,7 +420,7 @@ def initSp500Matrix(writeFile=True):
                 i+=1
                 sector=date['sector']
                 
-            sumSeries=np.zeros(date_index_internal[max(data_sp500.index)]-date_index_internal[commons.min_date])
+            sumSeries=np.zeros(date_index_internal[max(data_sp500.index)]-date_index_internal[commons.min_date]+1)
             for i,singleSeries in tickerSeries.items():
                 sumSeries+=singleSeries
             df=pd.DataFrame(data=sumSeries.reshape(-1,1),index=idx,columns=[ticker])
@@ -541,6 +541,7 @@ print 'sp500 data loaded'
 #initForeignSource() loads some tickers from yahoo and google. only needed 1x
 
 getCloseFromSP1() #for some tickers there is no data in wiki, but there is closing price in SP1
+print 'close from SP1 retrieved.'
 
 #loadBSC() loads Bear Stearns. Only needed 1x
 refreshWikiSp500('all') #update w/o changes
@@ -557,7 +558,7 @@ print 'sp500 changes loaded' #load of changes in SP500 index
 initSp500Matrix(False) #write the SP500_changes_dates.xls, to be used in various places for start/enddate calculation
 
 initSp500Matrix() #only needed 1x in the beginning
-#print 'sp500 matrix initialized'
+print 'sp500 matrix initialized'
 
 refreshWikiSp500('all',True) #update of WIKI changes
 print 'sp500 index change data refreshed'

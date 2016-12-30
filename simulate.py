@@ -51,13 +51,14 @@ def play_for_a_day(idx_external,dix,alpha,gamma,sim_uuid,train_uuid,scenario):
                         vol=p.portfolio[index_t][ticker]
                     else:
                         vol=1
-                    opening_price=m.get_opening_price(ticker,next_dix)
-                    forecast_price=f.get_order_price(ticker,state[ticker],dix,proposed_action[ticker],m.get_closing_price(ticker,dix))
-
-                    if opening_price>(forecast_price*.997):
-                        forecast_price=opening_price*.997
-                    reward[ticker]=p.execute_order(ticker,vol,next_dix,forecast_price,proposed_action[ticker],m.get_closing_price(ticker,dix),state[ticker]['12dd_Close'])
-                    dba.log_recommendation(sim_uuid,dix,ticker,commons.action_code['sell'],vol)    
+                    if vol>0:
+                        opening_price=m.get_opening_price(ticker,next_dix)
+                        forecast_price=f.get_order_price(ticker,state[ticker],dix,proposed_action[ticker],m.get_closing_price(ticker,dix))
+    
+#                        if opening_price>(forecast_price*.997):
+#                            forecast_price=opening_price*.997
+                        reward[ticker]=p.execute_order(ticker,vol,next_dix,forecast_price,proposed_action[ticker],m.get_closing_price(ticker,dix),state[ticker]['12dd_Close'])
+                        dba.log_recommendation(sim_uuid,dix,ticker,commons.action_code['sell'],vol)    
 
                 except KeyError:
                     p.portfolio[index_t][ticker]=0
@@ -87,7 +88,7 @@ def play_for_a_day(idx_external,dix,alpha,gamma,sim_uuid,train_uuid,scenario):
 
     #allocate for alignment
     for ticker,opening_price in order_untrained.items():
-        x=p.execute_order(ticker,action[ticker][1],next_dix,m.get_opening_price(ticker,next_dix),commons.action_code['buy'],m.get_closing_price(ticker,dix),state[ticker]['12dd_Close'])
+        x=p.execute_order(ticker,action[ticker][1],next_dix,m.get_opening_price(ticker,next_dix),commons.action_code['buy'],m.get_closing_price(ticker,dix),0)
 
     budget=dict()
     for k,v in commons.getIndexCodes().items():
@@ -102,8 +103,8 @@ def play_for_a_day(idx_external,dix,alpha,gamma,sim_uuid,train_uuid,scenario):
     for ticker,volume in orderBook.items():
         if volume<0: #selling what we have too much of
             forecast_price=f.get_order_price(ticker,state[ticker],dix,commons.action_code['sell'],m.get_closing_price(ticker,dix))
-            if order_entry[ticker]>(forecast_price*.997):
-                forecast_price=order_entry[ticker]*.997
+#            if order_entry[ticker]>(forecast_price*.997):
+#                forecast_price=order_entry[ticker]*.997
             a=p.execute_order(ticker,0-volume,next_dix,forecast_price,commons.action_code['sell'],m.get_closing_price(ticker,dix),state[ticker]['12dd_Close'])
             
     for ticker,volume in orderBook.items():
@@ -141,63 +142,62 @@ def getMaxSimrun(dba):
 gamma=.8
 alpha=.5
 
-for simrun in range(1,10):
-    sim_uuid=uuid.uuid1().hex
-    dba=db(sim_uuid,'r+')
-    scenario='best'
-    
-    initial_budget=100000
-    firstDate=11624
-    m=stock_market(dba,initial_budget,firstDate,False)
+sim_uuid=uuid.uuid1().hex
+dba=db(sim_uuid,'r+')
+scenario='best'
 
-    new_state=dict()
-    p=investments(initial_budget,m,firstDate,dba,sim_uuid)
+initial_budget=100000
+firstDate=13254
+m=stock_market(dba,initial_budget,firstDate,False)
 
-    dba.new_simulation(sim_uuid,commons.date_index_internal[commons.max_date['WIKI_SP500']],11624,commons.date_index_internal[commons.max_date['WIKI_SP500']])
+new_state=dict()
+p=investments(initial_budget,m,firstDate,dba,sim_uuid)
 
-    runningyear=0
-    for dix in range(firstDate,commons.date_index_internal[commons.max_date['WIKI_SP500']]):
-        if (dix-4)%20==0:
-            start=time.time()
-            train_uuid=uuid.uuid1().hex
-            #train_uuid='b988552ec64f11e69128c82a142bddcf'
-            print 'Retraining the models. Date:',commons.date_index_external[dix],'training guid:',train_uuid
+dba.new_simulation(sim_uuid,commons.date_index_internal[commons.max_date['WIKI_SP500']],firstDate,commons.date_index_internal[commons.max_date['WIKI_SP500']])
 
-            newTraining=cl_trainSection(dix-1,train_uuid,scenario,True)
-            newTraining.train()
-            f=forecast(m,train_uuid)
-            end=time.time()
-            print 'Training took',end-start,'seconds.'
-            
-            
-            
-        if commons.date_index_external[dix].year!=runningyear:
-            maxsim=getMaxSimrun(dba)
-            print 'Simulation for year:',commons.date_index_external[dix].year,'started. Simulation:',maxsim
-        runningyear=commons.date_index_external[dix].year
+runningyear=0
+for dix in range(firstDate,commons.date_index_internal[commons.max_date['WIKI_SP500']]):
+    if (dix-14)%20==0:
+        start=time.time()
+        train_uuid=uuid.uuid1().hex
+        #train_uuid='2bf75d91cdb411e68bbbc82a142bddcf'
+        print 'Retraining the models. Date:',commons.date_index_external[dix],'training guid:',train_uuid
 
-        if dix!=firstDate:
-            m.align_index_portfolio(dix)
-            
-        p.log_portfolio(dix,sim_uuid)
-        m.log_portfolio(dix,sim_uuid)
+        newTraining=cl_trainSection(dix-1,train_uuid,scenario,True)
+        newTraining.train()
+        f=forecast(m,train_uuid)
+        end=time.time()
+        print 'Training took',end-start,'seconds.'
         
-        for k,v in commons.getIndexCodes().items():
-            index_t=v[-8:]   
-            print 'Date: ',commons.date_index_external[dix],' Index: ',v[-8:],'Portfolio: ',int(p.get_portfolio_value(v[-8:],dix)),\
-                    ' Cash: ',int(p.cash[v[-8:]]),' Total: ',int(p.get_portfolio_value(v[-8:],dix))+int(p.cash[v[-8:]]),\
-                    ' Index: ',int(m.index_portfolio_value(k,dix))                             
-            dba.s_log.row['gamma']=gamma
-            dba.s_log.row['alpha']=alpha
-            dba.s_log.row['simrun']=maxsim
-            dba.s_log.row['sim_uuid']=sim_uuid
-            dba.s_log.row['dix']=dix
-            dba.s_log.row['index']=v[-8:]
-            dba.s_log.row['p_value']=int(p.get_portfolio_value(v[-8:],dix))
-            dba.s_log.row['cash']=int(p.cash[v[-8:]])
-            dba.s_log.row['i_value']=int(m.index_portfolio_value(k,dix))
-            dba.s_log.row.append()
-            dba.s_log.flush()
-            
-            play_for_a_day(k,dix, alpha, gamma,sim_uuid,train_uuid,scenario)
-                    
+        
+        
+    if commons.date_index_external[dix].year!=runningyear:
+        maxsim=getMaxSimrun(dba)
+        print 'Simulation for year:',commons.date_index_external[dix].year,'started. Simulation:',maxsim
+    runningyear=commons.date_index_external[dix].year
+
+    if dix!=firstDate:
+        m.align_index_portfolio(dix)
+        
+    p.log_portfolio(dix,sim_uuid)
+    m.log_portfolio(dix,sim_uuid)
+    
+    for k,v in commons.getIndexCodes().items():
+        index_t=v[-8:]   
+        print 'Date: ',commons.date_index_external[dix],' Index: ',v[-8:],'Portfolio: ',int(p.get_portfolio_value(v[-8:],dix)),\
+                ' Cash: ',int(p.cash[v[-8:]]),' Total: ',int(p.get_portfolio_value(v[-8:],dix))+int(p.cash[v[-8:]]),\
+                ' Index: ',int(m.index_portfolio_value(k,dix))                             
+        dba.s_log.row['gamma']=gamma
+        dba.s_log.row['alpha']=alpha
+        dba.s_log.row['simrun']=maxsim
+        dba.s_log.row['sim_uuid']=sim_uuid
+        dba.s_log.row['dix']=dix
+        dba.s_log.row['index']=v[-8:]
+        dba.s_log.row['p_value']=int(p.get_portfolio_value(v[-8:],dix))
+        dba.s_log.row['cash']=int(p.cash[v[-8:]])
+        dba.s_log.row['i_value']=int(m.index_portfolio_value(k,dix))
+        dba.s_log.row.append()
+        dba.s_log.flush()
+        
+        play_for_a_day(k,dix, alpha, gamma,sim_uuid,train_uuid,scenario)
+                

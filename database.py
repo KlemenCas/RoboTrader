@@ -242,11 +242,11 @@ class db(object):
                 distr=np.append(distr,distr_a)
             return distr[int(distr[int(random.random()*len(distr))])]
         elif scenario=='best':
-            if state['1dd_Close']==3:
+            if state['1dd_Close']==1:
                 return commons.action_code['buy']
-            elif state['1dd_Close']==2:
+            elif state['1dd_Close']==0:
                 return commons.action_code['hold']
-            elif state['1dd_Close']==1:
+            elif state['1dd_Close']==-1:
                 return commons.action_code['sell']
 
     def get_q_key(self,state):

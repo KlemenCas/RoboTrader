@@ -63,15 +63,16 @@ class forecast(object):
             print 'Ticker: ',ticker,' Date:',dix,commons.date_index_external[dix],' price==zero!'                                      
         expected_price=closing_price+closing_price*pct_change/100.
         
-#if not executable then price should be the closing price
-        next_dix=dix+1
-        closing_next_day=self.m.get_closing_price(ticker,next_dix)
-        low_next_day=self.m.get_low_price(ticker,next_dix)
-        high_next_day=self.m.get_high_price(ticker,next_dix)        
-        if action==commons.action_code['buy'] and expected_price<low_next_day:
-            expected_price=closing_next_day*1.001
-        if action==commons.action_code['sell'] and expected_price>high_next_day:
-            expected_price=closing_next_day*.999
+#if not executable and 12dd confirming then price should be the closing price
+#        if state['12dd_Close']==action:
+#            next_dix=dix+1
+#            closing_next_day=self.m.get_closing_price(ticker,next_dix)
+#            low_next_day=self.m.get_low_price(ticker,next_dix)
+#            high_next_day=self.m.get_high_price(ticker,next_dix)        
+#            if action==commons.action_code['buy'] and expected_price<low_next_day:
+#                expected_price=closing_next_day*1.001
+#            if action==commons.action_code['sell'] and expected_price>high_next_day:
+#                expected_price=closing_next_day*.999
             
         return expected_price
         

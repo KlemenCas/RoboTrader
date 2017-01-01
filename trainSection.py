@@ -24,11 +24,12 @@ class cl_trainSection(object):
     stats_kf=dict()    
     scenario=None
     
-    def __init__(self,cutoffdix,train_uuid,scenario,trainAll=True):
+    def __init__(self,cutoffdix,train_uuid,scenario,offset,trainAll=True):
         self.cutoffdix=cutoffdix
         self.train_uuid=train_uuid
         self.dba=db(self.train_uuid,'r+')
         self.scenario=scenario
+        self.offset=offset
         self.trainAll=trainAll
 
     def predict_labels(self,clf,X,y):
@@ -92,9 +93,9 @@ class cl_trainSection(object):
 
     def getXy(self,mode,modes,ticker,dates,lPca):
         #select relevant columns from Xy_all
-#        startdix=self.cutoffdix-500
-#        Xy_all=commons.read_dataframe(commons.data_path+'Xy_all_'+ticker).ix[commons.date_index_external[startdix]:commons.date_index_external[self.cutoffdix+1],:]
-        Xy_all=commons.read_dataframe(commons.data_path+'Xy_all_'+ticker).ix[:commons.date_index_external[self.cutoffdix+1],:]
+        startdix=self.cutoffdix-self.offset
+        Xy_all=commons.read_dataframe(commons.data_path+'Xy_all_'+ticker).ix[commons.date_index_external[startdix]:commons.date_index_external[self.cutoffdix+1],:]
+#        Xy_all=commons.read_dataframe(commons.data_path+'Xy_all_'+ticker).ix[:commons.date_index_external[self.cutoffdix+1],:]
         select_columns=list([])            
         for c in Xy_all.columns:
             if mode in str(c):
@@ -115,7 +116,7 @@ class cl_trainSection(object):
         X_all=Xy_all.ix[:,:-9]
 
         #reduce dimension space?
-        if len(X_all.index)>250:
+        if len(X_all.index)>100:
             if lPca!=0:
                 pca=PCA(n_components=lPca)
                 pca=pca.fit(X_all)
@@ -186,7 +187,7 @@ class cl_trainSection(object):
                         l_i-=1
             
                         Xy_all=self.getXy(mode,modes,k,dates,l_pca)
-                        if len(Xy_all[0].index)>250:
+                        if len(Xy_all[0].index)>100:
                             X_all=Xy_all[0]
                             y_all=Xy_all[1]
                             y_all=self.prepY(y_all,l_pca,k)

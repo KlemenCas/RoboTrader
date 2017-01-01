@@ -285,11 +285,17 @@ class db(object):
         self.t_sim_h.flush()
         
     
-    def log_recommendation(self,sim_uuid,dix,ticker,action,price):
+    def log_recommendation(self,sim_uuid,dix,ticker,action,price,_12dd,pct):
         self.t_recommend.row['sim_uuid']=sim_uuid
         self.t_recommend.row['dix']=dix
-        self.t_recommend.row['ticker']=ticker
-        self.t_recommend.row['action']=action
-        self.t_recommend.row['price']=price
+        self.t_recommend.row['symbol']=ticker
+        self.t_recommend.row['tradeTx']=action
+        self.t_recommend.row['tradePrice']=price
+        self.t_recommend.row['trade12dd']=_12dd
+        self.t_recommend.row['tradeIdxPct']=pct
+        self.t_recommend.row['tradeDate']=str(commons.date_index_external[dix].month)+'/'+\
+                                            str(commons.date_index_external[dix].day)+'/'+\
+                                            str(commons.date_index_external[dix].year)
+        self.t_recommend.row['tradeDateCopy']=self.t_recommend.row['tradeDate']                                            
         self.t_recommend.row.append()
         self.t_recommend.flush()

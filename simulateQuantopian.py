@@ -8,7 +8,7 @@ from trainSection import cl_trainSection
 import time
 
 def play_for_a_day(idx_external,dix,alpha,gamma,sim_uuid,train_uuid,scenario):
-    global f
+    global f,m
     temperature=1.5
     state=dict()
     proposed_action=dict()
@@ -23,8 +23,10 @@ def play_for_a_day(idx_external,dix,alpha,gamma,sim_uuid,train_uuid,scenario):
 
             proposed_action[ticker]=dba.get_softmax_action(ticker,state[ticker],temperature,scenario)
             price=f.get_order_price(ticker,state[ticker],dix,proposed_action[ticker],m.get_closing_price(ticker,dix))
-            dba.log_recommendation(sim_uuid,dix,ticker,proposed_action,price)
-
+            dba.log_recommendation(sim_uuid,dix,ticker,proposed_action[ticker],price,state[ticker]['12dd_Close'],m.get_index_portfolio(index_t,dix)[ticker])
+        else:
+            dba.log_recommendation(sim_uuid,dix,ticker,9,0,0,m.get_index_portfolio(index_t,dix)[ticker])
+            
         
 def getMaxSimrun(dba):
     maxsim=0
@@ -39,6 +41,7 @@ alpha=.5
 sim_uuid=uuid.uuid1().hex
 dba=db(sim_uuid,'r+')
 scenario='best'
+offset=1500
 
 initial_budget=100000
 firstDate=13254
@@ -58,7 +61,7 @@ for dix in range(firstDate,commons.date_index_internal[commons.max_date['WIKI_SP
         #train_uuid='2bf75d91cdb411e68bbbc82a142bddcf'
         print 'Retraining the models. Date:',commons.date_index_external[dix],'training guid:',train_uuid
 
-        newTraining=cl_trainSection(dix-1,train_uuid,scenario,True)
+        newTraining=cl_trainSection(dix-1,train_uuid,scenario,offset,True)
         newTraining.train()
         f=forecast(m,train_uuid)
         end=time.time()

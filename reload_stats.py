@@ -239,9 +239,13 @@ class db(object):
             try:
                 recommend_desc={'sim_uuid':tables.StringCol(32),
                                 'dix':tables.IntCol(),
-                                'ticker':tables.StringCol(10),
-                                'action':tables.StringCol(10),
-                                'price':tables.FloatCol()}
+                                'symbol':tables.StringCol(10),
+                                'tradeTx':tables.StringCol(10),
+                                'tradePrice':tables.FloatCol(),
+                                'trade12dd':tables.IntCol(),
+                                'tradeIdxPct':tables.FloatCol(),
+                                'tradeDate':tables.StringCol(10),
+                                'tradeDateCopy':tables.StringCol(10)}
                 self.t_recommend=self.db_main.create_table('/','recommend',recommend_desc)
                 self.t_recommend.cols.sim_uuid.create_index()
                 self.t_recommend.cols.dix.create_index()
@@ -256,9 +260,13 @@ class db(object):
             except tables.exceptions.NoSuchNodeError:
                 recommend_desc={'sim_uuid':tables.StringCol(32),
                                 'dix':tables.IntCol(),
-                                'ticker':tables.StringCol(10),
-                                'action':tables.StringCol(10),
-                                'price':tables.FloatCol()}
+                                'symbol':tables.StringCol(10),
+                                'tradeTx':tables.StringCol(10),
+                                'tradePrice':tables.FloatCol(),
+                                'trade12dd':tables.IntCol(),
+                                'tradeIdxPct':tables.FloatCol(),
+                                'tradeDate':tables.StringCol(10),
+                                'tradeDateCopy':tables.StringCol(10)}
                 self.t_recommend=self.db_main.create_table('/','recommend',recommend_desc)
                 self.t_recommend.cols.sim_uuid.create_index()
                 self.t_recommend.cols.dix.create_index()

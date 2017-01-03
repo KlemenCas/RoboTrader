@@ -77,7 +77,7 @@ def setPath():
         model_path ='C:/Users/kleme/OneDrive/HF_Trading/RoboTrader/model/'
         stats_path ='C:/Users/kleme/OneDrive/HF_Trading/RoboTrader/stats/'
         daily_path ='C:/Users/kleme/OneDrive/HF_Trading/RoboTrader/daily/'
-        analytics_path ='C:/Users/kleme/OneDrive/HF_Trading/RoboTrader/analytics/'
+        analytics_path ='C:/Users/kleme/Google Drive/'
     elif 'Klemens' in platform.node():
         backup_path='/Users/kncas/OneDrive/HF_Trading/RoboTrader/backup/'
         data_path  ='/Users/kncas/OneDrive/HF_Trading/RoboTrader/data/'

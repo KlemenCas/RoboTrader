@@ -193,7 +193,8 @@ class db(object):
                 print 'train header table not exist yet. nothing to initialize.'         
             try:
                 train_h_desc={'train_uuid':tables.StringCol(32),
-                              'enddix':tables.IntCol()}
+                              'enddix':tables.IntCol(),
+                              'dateint':tables.IntCol()}
                 self.t_train_h=self.db_main.create_table('/','train_h',train_h_desc)
                 self.t_train_h.cols.train_uuid.create_index()
                 print 'train header table created.'
@@ -245,7 +246,9 @@ class db(object):
                                 'trade12dd':tables.IntCol(),
                                 'tradeIdxPct':tables.FloatCol(),
                                 'tradeDate':tables.StringCol(10),
-                                'tradeDateCopy':tables.StringCol(10)}
+                                'tradeDateCopy':tables.StringCol(10),
+                                'offsetTraining':tables.IntCol(),
+                                'minTraining':tables.IntCol()}
                 self.t_recommend=self.db_main.create_table('/','recommend',recommend_desc)
                 self.t_recommend.cols.sim_uuid.create_index()
                 self.t_recommend.cols.dix.create_index()

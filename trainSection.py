@@ -22,15 +22,14 @@ class cl_trainSection(object):
     stats_accuracy=dict()
     stats_model=dict()
     stats_kf=dict()    
-    scenario=None
     
-    def __init__(self,cutoffdix,train_uuid,scenario,offset,trainAll=True):
+    def __init__(self,minTraining,cutoffdix,train_uuid,offset,trainAll=True):
         self.cutoffdix=cutoffdix
         self.train_uuid=train_uuid
         self.dba=db(self.train_uuid,'r+')
-        self.scenario=scenario
         self.offset=offset
         self.trainAll=trainAll
+        self.minTraining=minTraining
 
     def predict_labels(self,clf,X,y):
         y_pred = clf.predict(X)
@@ -116,7 +115,7 @@ class cl_trainSection(object):
         X_all=Xy_all.ix[:,:-9]
 
         #reduce dimension space?
-        if len(X_all.index)>100:
+        if len(X_all.index)>self.minTraining:
             if lPca!=0:
                 pca=PCA(n_components=lPca)
                 pca=pca.fit(X_all)
@@ -187,7 +186,7 @@ class cl_trainSection(object):
                         l_i-=1
             
                         Xy_all=self.getXy(mode,modes,k,dates,l_pca)
-                        if len(Xy_all[0].index)>100:
+                        if len(Xy_all[0].index)>self.minTraining:
                             X_all=Xy_all[0]
                             y_all=Xy_all[1]
                             y_all=self.prepY(y_all,l_pca,k)

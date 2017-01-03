@@ -4,6 +4,7 @@ import csv
 import numpy as np
 import random
 from math import exp
+import datetime as dt
 
 
 class db(object):
@@ -26,7 +27,7 @@ class db(object):
     alpha=0
     gamma=0
     
-    def __init__(self,sim_uuid,read_mode='r+'):
+    def __init__(self,sim_uuid,read_mode='r+',simulation=True):
 #        if read_mode=='x':
 #            self.read_mode='r+'
 #        else:
@@ -51,11 +52,12 @@ class db(object):
             self.load_ticker_ids()
         self.load_internal_ticker_ids()
         self.init_noTrade()
+        self.simulation=simulation
         
 
     def init_db(self,read_mode):
         self.db_main = tables.open_file(commons.stats_path+'simulation.h5', self.read_mode)
-        print 'database opened.'
+        #print 'database opened.'
 #        if read_mode=='x':        
 #            self.db_main.remove_node('/', 't_stats')
 #            self.db_main.remove_node('/', 't_parameter')
@@ -269,10 +271,30 @@ class db(object):
                     n=''
         
         return x
+
+    def getDateInt(self,datetime):
+        if datetime.month<10:
+            lM=str(0)+str(datetime.month)
+        else:
+            lM=str(datetime.timemonth)
+        if datetime.day<10:
+            lD=str(0)+str(datetime.day)
+        else:
+            lD=str(datetime.day)
+        if datetime.hour<10:
+            lh=str(0)+str(datetime.hour)
+        else:
+            lh=str(datetime.hour)
+        if datetime.minute<10:
+            lm=str(0)+str(datetime.minute)
+        else:
+            lm=str(datetime.minute)
+        return int(str(datetime.year)[-1]+lM+lD+lh+lm)
         
     def new_training(self,uuid,enddix):
         self.t_train_h.row['train_uuid']=uuid
         self.t_train_h.row['enddix']=enddix
+        self.t_train_h.row['dateint']=self.getDateInt(dt.datetime.today())
         self.t_train_h.row.append()
         self.t_train_h.flush()
         
@@ -285,7 +307,7 @@ class db(object):
         self.t_sim_h.flush()
         
     
-    def log_recommendation(self,sim_uuid,dix,ticker,action,price,_12dd,pct):
+    def log_recommendation(self,minTraining,offsetTraining,sim_uuid,dix,ticker,action,price,_12dd,pct):
         self.t_recommend.row['sim_uuid']=sim_uuid
         self.t_recommend.row['dix']=dix
         self.t_recommend.row['symbol']=ticker
@@ -293,9 +315,15 @@ class db(object):
         self.t_recommend.row['tradePrice']=price
         self.t_recommend.row['trade12dd']=_12dd
         self.t_recommend.row['tradeIdxPct']=pct
-        self.t_recommend.row['tradeDate']=str(commons.date_index_external[dix].month)+'/'+\
-                                            str(commons.date_index_external[dix].day)+'/'+\
-                                            str(commons.date_index_external[dix].year)
+        self.t_recommend.row['minTraining']=minTraining
+        self.t_recommend.row['offsetTraining']=offsetTraining
+        if self.simulation:
+            tomorrow=commons.date_index_external[dix+1]
+        else:
+            tomorrow=dt.datetime.today()+dt.timedelta(days=1)
+        self.t_recommend.row['tradeDate']=str(tomorrow.month)+'/'+\
+                                            str(tomorrow.day)+'/'+\
+                                            str(tomorrow.year)
         self.t_recommend.row['tradeDateCopy']=self.t_recommend.row['tradeDate']                                            
         self.t_recommend.row.append()
         self.t_recommend.flush()

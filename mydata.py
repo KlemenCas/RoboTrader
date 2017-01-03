@@ -13,7 +13,6 @@ class mydata(object):
     reload_baseline=False
     refresh_data=True
     demo_scenario=True
-    sp500_change=dict()
     df12dd=pd.DataFrame()
     df1dr=pd.DataFrame()
     df5dr=pd.DataFrame()
@@ -677,7 +676,7 @@ class mydata(object):
 
     def fillUpIndex(self,target,first='ffill'):
         dfIndex=list()
-        for dix in range(commons.date_index_internal[commons.min_date],commons.date_index_internal[commons.max_date['WIKI_SP500']]):
+        for dix in range(commons.date_index_internal[commons.min_date],commons.date_index_internal[commons.max_date['WIKI_SP500']]+1):
            dfIndex.append(commons.date_index_external[dix]) 
         df1=pd.DataFrame(index=dfIndex)
         target=target.join(df1,how='outer')

@@ -4,7 +4,7 @@ import csv
 import pandas as pd
 
 dbases=dict()
-dbases['simulation'] = tables.open_file(commons.stats_path+'simulation.h5', 'r')
+dbases['simulation'] = tables.open_file(commons.stats_path+'simulation.h5', 'r+')
 #dbases['t_log']=tables.open_file(commons.stats_path+'t_log.h5', 'r')
 #dbases['performance_log']=tables.open_file(commons.stats_path+'performance_log.h5', 'r')
 
@@ -13,7 +13,7 @@ for k, db in dbases.items():
         if x.__class__==tables.table.Table:
             tbl=dict()
             tbl[x.name]=db.get_node('/',x.name)
-            with open(commons.analytics_path+x.name+'.csv','w') as csvfile:
+            with open(commons.analytics_path+x.name+'.csv','wb') as csvfile:
                 csvwriter = csv.writer(csvfile, delimiter=',')
                 csvwriter.writerow(tbl[x.name].colnames)
                 for row in tbl[x.name]:
@@ -48,7 +48,7 @@ csvfile.close()
 
 
 #export index & portfolio composition
-dbases['simulation'] = tables.open_file(commons.stats_path+'simulation.h5', 'r')
+dbases['simulation'] = tables.open_file(commons.stats_path+'simulation.h5', 'r+')
 t_sim_h=dbases['simulation'].get_node('/','sim_h')
     
 #for index,t in commons.sp500_composition.items():

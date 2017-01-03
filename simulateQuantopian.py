@@ -1,3 +1,4 @@
+import reload_stats
 import commons
 from market import stock_market
 from database import db
@@ -41,7 +42,7 @@ alpha=.5
 sim_uuid=uuid.uuid1().hex
 dba=db(sim_uuid,'r+')
 scenario='best'
-offset=1500
+offset=250
 
 initial_budget=100000
 firstDate=13254
@@ -80,4 +81,5 @@ for dix in range(firstDate,commons.date_index_internal[commons.max_date['WIKI_SP
         index_t=v[-8:]   
         
         play_for_a_day(k,dix, alpha, gamma,sim_uuid,train_uuid,scenario)
-                
+
+import extract_stats                

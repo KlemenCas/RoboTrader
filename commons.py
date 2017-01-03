@@ -84,7 +84,7 @@ def setPath():
         model_path ='/Users/kncas/OneDrive/HF_Trading/RoboTrader/model/'
         stats_path ='/Users/kncas/OneDrive/HF_Trading/RoboTrader/stats/'
         daily_path ='/Users/kncas/OneDrive/HF_Trading/RoboTrader/daily/'
-        analytics_path='/Users/kncas/OneDrive/HF_Trading/RoboTrader/analytics/'
+        analytics_path='/Users/kncas/Google Drive/mac/'
     local_path='./'
     
 #read datafrom from disc

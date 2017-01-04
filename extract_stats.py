@@ -118,22 +118,22 @@ t_sim_h=dbases['simulation'].get_node('/','sim_h')
 #    csvfile.close()  
     
 #extract prices
-df=pd.read_hdf(commons.data_path+'WIKI_SP500.h5','table')
-with open(commons.analytics_path+'prices.csv','w') as csvfile:
-    csvwriter = csv.writer(csvfile, delimiter=',')
-    xrow=list(['Symbol','Date','Type','Price'])
-    csvwriter.writerow(xrow)
-    types=list(['Open','Close','Low','High'])    
-    for ticker in commons.getHistSp500TickerList(1,1,False):
-        for t in types:
-            c=str(ticker)+'_'+str(t)
-            print c
-            if c in df.columns:
-                for d in df.index:
-                    xrow=list()
-                    xrow.append(ticker)
-                    xrow.append(d)
-                    xrow.append(t)
-                    xrow.append(float(df.ix[d,c]))
-                    csvwriter.writerow(xrow)
-csvfile.close()
+#df=pd.read_hdf(commons.data_path+'WIKI_SP500.h5','table')
+#with open(commons.analytics_path+'prices.csv','w') as csvfile:
+#    csvwriter = csv.writer(csvfile, delimiter=',')
+#    xrow=list(['Symbol','Date','Type','Price'])
+#    csvwriter.writerow(xrow)
+#    types=list(['Open','Close','Low','High'])    
+#    for ticker in commons.getHistSp500TickerList(1,1,False):
+#        for t in types:
+#            c=str(ticker)+'_'+str(t)
+#            print c
+#            if c in df.columns:
+#                for d in df.index:
+#                    xrow=list()
+#                    xrow.append(ticker)
+#                    xrow.append(d)
+#                    xrow.append(t)
+#                    xrow.append(float(df.ix[d,c]))
+#                    csvwriter.writerow(xrow)
+#csvfile.close()

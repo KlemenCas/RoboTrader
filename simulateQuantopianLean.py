@@ -26,7 +26,7 @@ from runQlib import cl_runQ
 import uuid
 from trainSection import cl_trainSection 
 
-def play_for_a_day(idx_external,dix,sim_uuid,train_uuid,minTraining,offsetTraining):
+def play_for_a_day(idx_external,dix,sim_uuid,minTraining,offsetTraining):
     global rQ
     state=dict()
     proposed_action=dict()
@@ -34,7 +34,7 @@ def play_for_a_day(idx_external,dix,sim_uuid,train_uuid,minTraining,offsetTraini
     index_t=commons.getIndexCodes()[idx_external][-8:]
 
     for ticker in commons.getHistSp500Composition(commons.date_index_external[dix])[index_t]:
-        if rQ.trained(train_uuid,ticker):
+        if rQ.trained(ticker):
             state[ticker]=rQ.get_forecast_state(ticker,dix)
             proposed_action[ticker]=rQ.get_best_action(state[ticker])
             price=rQ.get_order_price(ticker,state[ticker],dix,proposed_action[ticker])
@@ -76,7 +76,7 @@ for dix in range(firstDix,commons.date_index_internal[commons.max_date['WIKI_SP5
         
     for k,v in commons.getIndexCodes().items():
         index_t=v[-8:]       
-        play_for_a_day(k,refDix, sim_uuid,train_uuid,minTraining,offsetTraining)
+        play_for_a_day(k,refDix, sim_uuid,minTraining,offsetTraining)
         
     if dailyRun:
         break

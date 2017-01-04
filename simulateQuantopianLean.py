@@ -1,6 +1,6 @@
 refreshData=False #True if new data from quandl needed
 simulation=True #False if forecast for tomorrow
-offsetTraining=300 #take last x days for the training
+offsetTraining=700 #take last x days for the training
 minTraining=200 #new ticker below this time will be traded according to index %
 firstRun=True
 firstDix=13254 #1/1/2014
@@ -47,6 +47,9 @@ def play_for_a_day(idx_external,dix,sim_uuid,minTraining,offsetTraining):
 sim_uuid=uuid.uuid1().hex
 dba=db(sim_uuid,'r+',simulation)
 
+#maxDix=commons.date_index_internal[commons.max_date['WIKI_SP500']]+1 #12/13/16
+maxDix=13521 #12/31/14
+#maxDix=13786 #12/31/15
 
 for dix in range(firstDix,commons.date_index_internal[commons.max_date['WIKI_SP500']]+1):
     if dailyRun:

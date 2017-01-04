@@ -12,7 +12,6 @@ from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
 from sklearn.metrics import mean_squared_error
 from sklearn import tree
 from sklearn.decomposition import PCA
-import uuid
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.externals import joblib

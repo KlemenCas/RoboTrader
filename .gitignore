@@ -8,5 +8,10 @@
 
 >>>>>>> Stashed changes
 *.pyc
+<<<<<<< HEAD
+
+=======
+>>>>>>> origin/master
+*.pyc
 
 *.pyc

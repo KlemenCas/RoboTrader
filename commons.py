@@ -218,8 +218,8 @@ def Xy_columns(Xy_all,mode,feature_only=False):
             if m_found==False:
                 select_columns.append(c)
     if feature_only==True:
-        select_columns.remove('_chr')
-        select_columns.remove('_clr')
+        select_columns.remove('chr')
+        select_columns.remove('clr')
         select_columns.remove('1dr_Close')
         select_columns.remove('5dr_Close')
         select_columns.remove('20dr_Close')        

@@ -116,7 +116,7 @@ class cl_runQ(object):
             clusters=self.dba.t_clusters.read_where('(ticker=='+"'"+str(ticker)+"'"+")"+' & (kpi=='+"'"+'chr'+"')")
             for row in clusters:
                 for i in range(0,5):
-                    x=state['clr_cluster_'+str(i)]+2
+                    x=state['chr_cluster_'+str(i)]+2
                     if x==3:
                         if i!=4:
                             pct_change=(row['c'+str(i)] + row['c'+str(i+1)])/2.
@@ -156,7 +156,7 @@ class cl_runQ(object):
                 portfolio[t]=self.indexComposition[index_t].ix[commons.date_index_external[dix],t]
         return portfolio            
         
-    def trained(self,train_uuid,ticker):
+    def trained(self,ticker):
         found=False
         stats=self.dba.t_stats.read_where('(ticker=='+"'"+str(ticker)+"'"+")"+' & (kpi=='+"'"+'1dd_Close'+"')")
         for row in stats:

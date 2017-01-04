@@ -529,7 +529,7 @@ class mydata(object):
             
         a=list(['ns_ss','ny_ss'])
         for x in a:
-            select_columns=list([str(ticker)+str(x)])
+            select_columns=list([str(ticker)+'_'+str(x)])
             target_columns=list([str(x)])
             np1=getattr(self,'df'+str(x)).ix[self.df1st_date[ticker]:,select_columns].values
             np1=np.nan_to_num(np1)

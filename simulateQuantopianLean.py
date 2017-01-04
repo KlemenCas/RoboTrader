@@ -1,6 +1,6 @@
 refreshData=False #True if new data from quandl needed
 simulation=True #False if forecast for tomorrow
-offsetTraining=300 #take last x days for the training
+offsetTraining=1500 #take last x days for the training
 minTraining=200 #new ticker below this time will be traded according to index %
 firstRun=True
 firstDix=13254 #1/1/2014

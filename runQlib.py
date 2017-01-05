@@ -147,7 +147,7 @@ class cl_runQ(object):
         expectedPrice.append(closing_price+closing_price*pctMid/100)
         expectedPrice.append(closing_price+closing_price*pctMax/100)
         
-        return expected_price            
+        return expectedPrice            
         
     #closing price        
     def get_closing_price(self,ticker,dix):

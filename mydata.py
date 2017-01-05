@@ -313,10 +313,10 @@ class mydata(object):
         print 'Labels calculated.'
         #alpha & beta
 
-        #drop outliers; top and bottom 1%    
-        a=list(['1dm','2dm','5dm','30dsma','30dmx','30dmn','5dv','bbands','clr','chr','ny_ss','ns_ss','1er','2er','5er'])
-        for x in a:
-            setattr(self,'df'+str(x),self.drop_outliers(getattr(self,'df'+str(x))))
+#        #drop outliers; top and bottom 1%    
+#        a=list(['1dm','2dm','5dm','30dsma','30dmx','30dmn','5dv','bbands','clr','chr','ny_ss','ns_ss','1er','2er','5er'])
+#        for x in a:
+#            setattr(self,'df'+str(x),self.drop_outliers(getattr(self,'df'+str(x))))
                 
         
         #fill, minmax and direction

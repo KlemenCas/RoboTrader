@@ -1,6 +1,6 @@
 refreshData=False #True if new data from quandl needed
 simulation=True #False if forecast for tomorrow
-offsetTraining=500 #take last x days for the training
+offsetTraining=700 #take last x days for the training
 minTraining=200 #new ticker below this time will be traded according to index %
 firstRun=True
 firstDix=13254 #1/1/2014
@@ -41,7 +41,7 @@ def play_for_a_day(idx_external,dix,sim_uuid,minTraining,offsetTraining):
             dba.log_recommendation(minTraining,offsetTraining,sim_uuid,dix,ticker,proposed_action[ticker],price,state[ticker]['12dd_Close'],rQ.get_index_portfolio(index_t,dix)[ticker],rQ.getModelAccuracy(ticker,'1dd_Close'))
             
         else:
-            dba.log_recommendation(minTraining,offsetTraining,sim_uuid,dix,ticker,9,0,0,rQ.get_index_portfolio(index_t,dix)[ticker],0)
+            dba.log_recommendation(minTraining,offsetTraining,sim_uuid,dix,ticker,9,[0,0,0],0,rQ.get_index_portfolio(index_t,dix)[ticker],0)
             
         
 sim_uuid=uuid.uuid1().hex

@@ -1,6 +1,10 @@
 refreshData=False #True if new data from quandl needed
 simulation=True #False if forecast for tomorrow
+<<<<<<< Updated upstream
 offsetTraining=500 #take last x days for the training
+=======
+offsetTraining=900 #take last x days for the training
+>>>>>>> Stashed changes
 minTraining=200 #new ticker below this time will be traded according to index %
 firstRun=True
 firstDix=13254 #1/1/2014
@@ -47,11 +51,18 @@ def play_for_a_day(idx_external,dix,sim_uuid,minTraining,offsetTraining):
 sim_uuid=uuid.uuid1().hex
 dba=db(sim_uuid,'r+',simulation)
 
+<<<<<<< Updated upstream
 #maxDix=commons.date_index_internal[commons.max_date['WIKI_SP500']]+1 #12/13/16
 maxDix=13521 #12/31/14
 #maxDix=13786 #12/31/15
 
 for dix in range(firstDix,commons.date_index_internal[commons.max_date['WIKI_SP500']]+1):
+=======
+#maxDix=commons.date_index_internal[commons.max_date['WIKI_SP500']]+1
+maxDix=13521 #12/13/14
+#maxDix=13786 #12/31/15
+for dix in range(firstDix,maxDix+1):
+>>>>>>> Stashed changes
     if dailyRun:
         refDate=commons.getClosestDate(commons.idx_today)
         refDix=commons.date_index_internal[refDate]

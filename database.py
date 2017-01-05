@@ -312,7 +312,9 @@ class db(object):
         self.t_recommend.row['dix']=dix
         self.t_recommend.row['symbol']=ticker
         self.t_recommend.row['tradeTx']=action
-        self.t_recommend.row['tradePrice']=price
+        self.t_recommend.row['tradePriceMin']=price[0]
+        self.t_recommend.row['tradePriceMid']=price[1]
+        self.t_recommend.row['tradePriceMax']=price[2]        
         self.t_recommend.row['trade12dd']=_12dd
         self.t_recommend.row['tradeIdxPct']=pct
         self.t_recommend.row['minTraining']=minTraining

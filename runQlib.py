@@ -102,29 +102,50 @@ class cl_runQ(object):
     def get_order_price(self,ticker,state,dix,action):
         closing_price=self.get_closing_price(ticker,dix)
         clusters=self.dba.t_clusters.read_where('(ticker=='+"'"+str(ticker)+"'"+")"+' & (kpi=='+"'"+'clr'+"')")
-        pct_change=0
+        pctMin=0
+        pctMid=0
+        pctMax=0
         if action==commons.action_code['buy']:
             for row in clusters:
                 for i in range(4,-1,-1):
                     x=state['clr_cluster_'+str(i)]+2
                     if x==3:
-                        if i!=0:
-                            pct_change=(row['c'+str(i)] + row['c'+str(i-1)])/2.
+                        if i!=0 and i!=4:
+                            pctMin=(row['c'+str(i)] + row['c'+str(i-1)])/2.
+                            pctMid=row['c'+str(i)]
+                            pctMax=(row['c'+str(i)] + row['c'+str(i+1)])/2.
+                        elif i==0:
+                            pctMin=row['c'+str(i)]
+                            pctMid=row['c'+str(i)]
+                            pctMax=(row['c'+str(i)] + row['c'+str(i+1)])/2.
                         else:
-                            pct_change=row['c'+str(i)]
+                            pctMin=(row['c'+str(i)] + row['c'+str(i-1)])/2.
+                            pctMid=row['c'+str(i)]
+                            pctMax=row['c'+str(i)]
         if action==commons.action_code['sell']:                                           
             clusters=self.dba.t_clusters.read_where('(ticker=='+"'"+str(ticker)+"'"+")"+' & (kpi=='+"'"+'chr'+"')")
             for row in clusters:
                 for i in range(0,5):
                     x=state['chr_cluster_'+str(i)]+2
                     if x==3:
-                        if i!=4:
-                            pct_change=(row['c'+str(i)] + row['c'+str(i+1)])/2.
+                        if i!=0 and i!=4:
+                            pctMin=(row['c'+str(i)] + row['c'+str(i-1)])/2.
+                            pctMid=row['c'+str(i)]
+                            pctMax=(row['c'+str(i)] + row['c'+str(i+1)])/2.
+                        elif i==0:
+                            pctMin=row['c'+str(i)]
+                            pctMid=row['c'+str(i)]
+                            pctMax=(row['c'+str(i)] + row['c'+str(i+1)])/2.
                         else:
-                            pct_change=row['c'+str(i)]                                           
+                            pctMin=(row['c'+str(i)] + row['c'+str(i-1)])/2.
+                            pctMid=row['c'+str(i)]
+                            pctMax=row['c'+str(i)]
         if closing_price==0:
             print 'Ticker: ',ticker,' Date:',dix,commons.date_index_external[dix],' price==zero!'                                      
-        expected_price=closing_price+closing_price*pct_change/100.
+        expectedPrice=list()
+        expectedPrice.append(closing_price+closing_price*pctMin/100)
+        expectedPrice.append(closing_price+closing_price*pctMid/100)
+        expectedPrice.append(closing_price+closing_price*pctMax/100)
         
         return expected_price            
         

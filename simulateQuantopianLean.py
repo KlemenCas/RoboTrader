@@ -7,6 +7,7 @@ firstDix=13254 #1/1/2014
 dailyRun=False #set to True, if forecast for tomorrow
 
 
+
 import time
 start=time.time()
 if refreshData:

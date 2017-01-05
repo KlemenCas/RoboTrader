@@ -307,7 +307,7 @@ class db(object):
         self.t_sim_h.flush()
         
     
-    def log_recommendation(self,minTraining,offsetTraining,sim_uuid,dix,ticker,action,price,_12dd,pct):
+    def log_recommendation(self,minTraining,offsetTraining,sim_uuid,dix,ticker,action,price,_12dd,pct,modelAccuracy):
         self.t_recommend.row['sim_uuid']=sim_uuid
         self.t_recommend.row['dix']=dix
         self.t_recommend.row['symbol']=ticker
@@ -324,6 +324,7 @@ class db(object):
         self.t_recommend.row['tradeDate']=str(tomorrow.month)+'/'+\
                                             str(tomorrow.day)+'/'+\
                                             str(tomorrow.year)
-        self.t_recommend.row['tradeDateCopy']=self.t_recommend.row['tradeDate']                                            
+        self.t_recommend.row['tradeDateCopy']=self.t_recommend.row['tradeDate']                                    
+        self.t_recommend.row['modelAccuracy']=modelAccuracy
         self.t_recommend.row.append()
         self.t_recommend.flush()

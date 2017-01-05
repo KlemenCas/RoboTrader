@@ -248,7 +248,8 @@ class db(object):
                                 'tradeDate':tables.StringCol(10),
                                 'tradeDateCopy':tables.StringCol(10),
                                 'offsetTraining':tables.IntCol(),
-                                'minTraining':tables.IntCol()}
+                                'minTraining':tables.IntCol(),
+                                'modelAccuracy':tables.FloatCol()}
                 self.t_recommend=self.db_main.create_table('/','recommend',recommend_desc)
                 self.t_recommend.cols.sim_uuid.create_index()
                 self.t_recommend.cols.dix.create_index()
@@ -269,7 +270,10 @@ class db(object):
                                 'trade12dd':tables.IntCol(),
                                 'tradeIdxPct':tables.FloatCol(),
                                 'tradeDate':tables.StringCol(10),
-                                'tradeDateCopy':tables.StringCol(10)}
+                                'tradeDateCopy':tables.StringCol(10),
+                                'offsetTraining':tables.IntCol(),
+                                'minTraining':tables.IntCol(),
+                                'modelAccuracy':tables.FloatCol()}
                 self.t_recommend=self.db_main.create_table('/','recommend',recommend_desc)
                 self.t_recommend.cols.sim_uuid.create_index()
                 self.t_recommend.cols.dix.create_index()

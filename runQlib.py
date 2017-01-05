@@ -163,4 +163,13 @@ class cl_runQ(object):
             if str(self.train_uuid)==row['train_uuid']:
                 found=True
                 break
-        return found        
+        return found      
+        
+    def getModelAccuracy(self,ticker,label):
+        models=self.dba.t_stats.read_where('(ticker=='+"'"+str(ticker)+"')"+' & (kpi=='+"'"+str(label)+"')")
+        ticker_accuracy=0
+        for row in models:
+            if str(self.train_uuid)==row['train_uuid']:
+                if row['accuracy']>ticker_accuracy:
+                    ticker_accuracy=row['accuracy']
+        return ticker_accuracy

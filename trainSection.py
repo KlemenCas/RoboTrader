@@ -185,11 +185,7 @@ class cl_trainSection(object):
                         l_i-=1
             
                         Xy_all=self.getXy(mode,modes,k,dates,l_pca)
-<<<<<<< Updated upstream
                         if len(Xy_all[0].index)>self.minTraining:
-=======
-                        if len(Xy_all[0].index)>200:
->>>>>>> Stashed changes
                             X_all=Xy_all[0]
                             y_all=Xy_all[1]
                             y_all=self.prepY(y_all,l_pca,k)
